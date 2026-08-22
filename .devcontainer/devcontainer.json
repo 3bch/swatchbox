@@ -1,0 +1,38 @@
+{
+  "name": "Dev",
+  "dockerComposeFile": "./compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/workspaces/swatchbox",
+  "initializeCommand": "./.devcontainer/initialize.sh",
+  "postCreateCommand": "./.devcontainer/postCreate.sh",
+  "remoteUser": "vscode",
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite",
+      "requireLocalPort": true
+    }
+  },
+  "features": {
+    "ghcr.io/atty303/devcontainer-features/mise:1.3.0": {
+      "version": "v2026.8.10",
+      "trust": false,
+      "install": false
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "mhutchie.git-graph",
+        "-esbenp.prettier-vscode",
+        "-dbaeumer.vscode-eslint",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "remote.restoreForwardedPorts": false,
+        "remote.autoForwardPorts": false
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+services:
+  dev:
+    build: './dev'
+    init: true
+    command: 'sleep infinity'
+    cap_drop:
+      - 'ALL'
+    security_opt:
+      - 'no-new-privileges:true'
+    volumes:
+      - '..:/workspaces/swatchbox'
+      - './claude/.claude:/home/vscode/.claude'
+      - './claude/.claude.json:/home/vscode/.claude.json'
+      - 'mise-data:/home/vscode/.local/share/mise'
+      - 'mise-cache:/home/vscode/.cache/mise'
+      - 'playwright-cache:/home/vscode/.cache/ms-playwright'
+    environment:
+      - 'TZ=Asia/Tokyo'
+
+volumes:
+  mise-data: {}
+  mise-cache: {}
+  playwright-cache: {}

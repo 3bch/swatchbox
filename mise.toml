@@ -1,0 +1,16 @@
+[settings]
+lockfile = true
+minimum_release_age = "2d"
+npm.package_manager = "pnpm"
+
+[tools]
+node = "lts"
+pnpm = "latest"
+
+claude = "latest"
+"npm:@playwright/cli" = "latest"
+"npm:ccusage" = "latest"
+lefthook = "latest"
+
+[hooks]
+postinstall = "lefthook install"

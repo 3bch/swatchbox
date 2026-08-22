@@ -1,0 +1,9 @@
+{
+  "features": {
+    "ghcr.io/atty303/devcontainer-features/mise:1.3.0": {
+      "version": "1.3.0",
+      "resolved": "ghcr.io/atty303/devcontainer-features/mise@sha256:271ca0537e4834d87734be39b929b73bf6a5fec2426176d6ecfcb779083ad3e3",
+      "integrity": "sha256:271ca0537e4834d87734be39b929b73bf6a5fec2426176d6ecfcb779083ad3e3"
+    }
+  }
+}

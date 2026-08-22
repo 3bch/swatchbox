@@ -1,0 +1,9 @@
+/.claude/skills/playwright-cli
+/.devcontainer/claude/*
+/.playwright-cli
+/.pnpm-store
+/.tanstack
+/coverage
+/dist
+/node_modules
+/src/routeTree.gen.ts
