@@ -4,8 +4,8 @@ set -euo pipefail
 
 git config pull.ff only
 
-# mise trust --yes
-# mise install --yes
+mise trust --yes
+mise install --yes
 
 # mise exec -- pnpm install
 
