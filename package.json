@@ -6,6 +6,16 @@
     "#/*": "./src/*"
   },
   "scripts": {
+    "check:lint": "oxlint",
+    "check:format": "oxfmt --check",
+    "check:type": "tsc --noEmit",
+    "fix:lint": "oxlint --fix",
+    "fix:format": "oxfmt --write"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.64.0",
+    "oxlint": "^1.79.0",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=24",
