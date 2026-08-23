@@ -1,0 +1,11 @@
+blockExoticSubdeps: true
+
+frozenLockfile: true
+
+minimumReleaseAge: 2880 # 2 days
+
+strictDepBuilds: true
+
+trustPolicy: 'no-downgrade'
+
+trustPolicyIgnoreAfter: 525600
