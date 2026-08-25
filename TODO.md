@@ -1,0 +1,7 @@
+- [ ] vite 設定
+- [ ] tsconfig 設定
+- [ ] oxlint 設定
+    - [x] sort-imports でブロック内だけソート
+- [ ] yaml だけ eslint でチェック
+- [ ] lefthook 設定
+- [ ] シークレットスキャン
