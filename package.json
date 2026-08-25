@@ -6,16 +6,29 @@
     "#/*": "./src/*"
   },
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "check:lint": "oxlint",
     "check:format": "oxfmt --check",
     "check:type": "tsc --noEmit",
     "fix:lint": "oxlint --fix",
     "fix:format": "oxfmt --write"
   },
+  "dependencies": {
+    "@tanstack/react-router": "^1.170.32",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
   "devDependencies": {
+    "@tanstack/router-plugin": "^1.168.35",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
     "oxfmt": "^0.64.0",
     "oxlint": "^1.79.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
   },
   "engines": {
     "node": ">=24",
