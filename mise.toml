@@ -7,10 +7,13 @@ npm.package_manager = "pnpm"
 node = "lts"
 pnpm = "latest"
 
+lefthook = "latest"
+gitleaks = "latest"
+
 claude = "latest"
 "npm:@playwright/cli" = "latest"
 "npm:ccusage" = "latest"
-lefthook = "latest"
+
 
 [hooks]
 postinstall = "lefthook install"

@@ -3,5 +3,5 @@
 - [ ] oxlint 設定
     - [x] sort-imports でブロック内だけソート
 - [ ] yaml だけ eslint でチェック
-- [ ] lefthook 設定
-- [ ] シークレットスキャン
+- [x] lefthook 設定
+- [x] シークレットスキャン
