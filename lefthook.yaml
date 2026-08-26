@@ -17,6 +17,10 @@ pre-commit:
           - name: 'type'
             run: 'node --run check:type'
 
+          - name: 'peer'
+            glob: '{package.json,pnpm-lock.yaml}'
+            run: 'pnpm peers check --lockfile-only'
+
           - name: 'yaml'
             glob: '*.{yaml,yml}'
             run: 'node --run check:yaml'
