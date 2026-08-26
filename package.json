@@ -9,6 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "check": "pnpm run --sequential --no-bail \"/^check:/\"",
     "check:lint": "oxlint",
     "check:format": "oxfmt --check",
     "check:type": "tsc --noEmit",

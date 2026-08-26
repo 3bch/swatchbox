@@ -14,11 +14,12 @@
   （ただし `src/components/ui/**` の shadcn/ui 生成物は外部由来のため対象外。再インストール時に
   上書きされるので、生成されたコードには手を入れないこと）
 - 型チェックやリント、フォーマットなどは package.json の scripts に定義されたものを使うこと
+- scripts の実行には `pnpm run` ではなく `node --run <script>` を使うこと
 
 ## ブラウザでの表示確認
 
 - 表示確認には playwright-cli を利用すること（skill は `.claude/skills/playwright-cli/` に導入済み）
-- 確認前に `pnpm dev` で dev サーバーを起動すること（http://localhost:5173）
+- 確認前に `node --run dev` で dev サーバーを起動すること（http://localhost:5173）
 - ブラウザ設定は `.playwright/cli.config.json` にあるため `--browser` の指定は不要
 - 確認が終わったら `playwright-cli close-all` でブラウザを終了すること
 
