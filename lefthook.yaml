@@ -18,6 +18,7 @@ pre-commit:
             run: 'pnpm run check:type'
 
           - name: 'yaml'
+            glob: '*.{yaml,yml}'
             run: 'pnpm run check:yaml'
 
 pre-push:
