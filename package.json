@@ -26,12 +26,13 @@
   "devDependencies": {
     "@tanstack/router-plugin": "^1.168.35",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^6.1.0",
     "eslint": "^10.9.0",
     "eslint-plugin-yml": "^3.8.1",
     "oxfmt": "^0.64.0",
     "oxlint": "^1.79.0",
+    "oxlint-tsgolint": "^7.0.2001",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
   },

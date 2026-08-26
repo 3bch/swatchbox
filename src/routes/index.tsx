@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({
-  component: IndexComponent,
-});
+import { Home } from "#/components/home.tsx";
 
-function IndexComponent() {
-  return <div>swatchbox</div>;
-}
+export const Route = createFileRoute("/")({
+  component: Home,
+});
