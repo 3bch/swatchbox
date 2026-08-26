@@ -12,29 +12,20 @@
     "promise",
     "vitest",
     "jsdoc"
-
-    // react-perf は React Compiler で不要になるので利用しない
-    // node / nextjs / vue / jest はこのプロジェクトでは使わない
   ],
 
   "categories": {
     "correctness": "error",
     "suspicious": "error",
     "perf": "error",
-    // style は prefer-default-export と no-named-export のように
-    // 相反するルールが同居しているため一括では有効にできない
     "style": "off",
-    // restriction は個別に選んで有効化する方針とする
     "restriction": "off",
     "pedantic": "off",
     "nursery": "off"
   },
 
-  // oxlint v1.79 で追加された設定ブロック（CLI フラグと同等）
   "options": {
-    // type aware ルールの有効化（oxlint-tsgolint パッケージが必要）
     "typeAware": true,
-    // 不要になった oxlint-disable / eslint-disable コメントを検出する
     "reportUnusedDisableDirectives": "error"
   },
 
@@ -68,7 +59,6 @@
     "eslint/no-restricted-imports": [
       "error",
       {
-        // 手動メモ化の禁止（React Compiler 導入予定）
         "paths": [
           {
             "name": "react",
@@ -76,8 +66,7 @@
             "message": "React Compiler 導入予定のため、手動メモ化は不要です"
           }
         ],
-        // 相対パス import の禁止。glob の * はスラッシュを跨がないため
-        // "./*" や "../*" では "./a/b" や "../../a" を検出できない
+        // 相対パス import の禁止
         "patterns": [
           {
             "regex": "^[.][.]?/",
@@ -106,9 +95,7 @@
     "typescript/no-require-imports": "error",
     "typescript/prefer-optional-chain": "error",
     "typescript/method-signature-style": "error",
-    // verbatimModuleSyntax との組み合わせで副作用付き type import を防ぐ
     "typescript/no-import-type-side-effects": "error",
-    // ban-types は typescript-eslint で廃止されたため、後継ルールに置き換え
     "typescript/no-unsafe-function-type": "error",
     "typescript/no-empty-object-type": "error",
 
@@ -123,7 +110,6 @@
     "unicorn/new-for-builtins": "error",
     "unicorn/no-instanceof-builtins": "error",
     "unicorn/prefer-string-replace-all": "error",
-    // target: es2025 なので非破壊メソッド（toReversed / toSorted）を使う
     "unicorn/no-array-reverse": "error",
     "unicorn/no-array-sort": "error",
     "unicorn/prefer-array-flat-map": "error",
@@ -138,7 +124,6 @@
     "unicorn/prefer-node-protocol": "error",
     "unicorn/consistent-date-clone": "error",
     "unicorn/require-number-to-fixed-digits-argument": "error",
-    // DOM 操作系（ブラウザ向け SPA のため有効化）
     "unicorn/prefer-query-selector": "error",
     "unicorn/prefer-dom-node-append": "error",
     "unicorn/prefer-dom-node-remove": "error",
@@ -151,18 +136,17 @@
     "unicorn/prefer-blob-reading-methods": "error",
     "unicorn/no-document-cookie": "error",
 
-    "import/consistent-type-specifier-style": "error",
+    "import/consistent-type-specifier-style": ["error", "prefer-top-level-if-only-type-imports"],
     "import/no-anonymous-default-export": "error",
     "import/no-cycle": "error",
     "import/no-unassigned-import": [
       "error",
       { "allow": ["@testing-library/jest-dom/vitest", "**/*.css"] }
     ],
-    "import/no-duplicates": "error",
+    "import/no-duplicates": ["error", { "preferInline": true }],
     "import/no-empty-named-blocks": "error",
     "import/no-mutable-exports": "error",
     // default export と named export を併せ持つパッケージで誤検知するため OFF
-    // （eslint-plugin-yml の yml.configs など）
     "import/no-named-as-default-member": "off",
 
     // React 17 以降は不要なルールなので OFF
@@ -173,16 +157,10 @@
     "react/no-array-index-key": "error",
     "react/jsx-no-useless-fragment": "error",
     "react/self-closing-comp": "error",
-    // Fast Refresh（react-refresh 相当）。restriction カテゴリのため明示的に有効化する。
-    // コンポーネントは routes ではなく src/components 配下に定義することで
-    // ルートファイルとコンポーネントの同居を避ける
+    // Fast Refresh（react-refresh 相当）
     "react/only-export-components": ["error", { "allowConstantExport": true }],
 
     // --- React Compiler 由来のルール --- //
-    // oxlint v1.70 の実験的な react/react-compiler は v1.79 で削除され、
-    // カテゴリ別の 22 ルールに分割された。
-    // correctness の 12 ルール（purity / refs / immutability / set-state-in-render など）は
-    // categories の correctness: error で自動的に有効になるため個別指定は不要。
     "react/hooks": "error",
     "react/capitalized-calls": "error",
     "react/memo-dependencies": "error",
