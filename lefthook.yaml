@@ -1,7 +1,7 @@
 pre-commit:
   jobs:
     - name: 'format'
-      run: 'pnpm run fix:format'
+      run: 'node --run fix:format'
       stage_fixed: true
 
     - name: 'checks'
@@ -12,14 +12,14 @@ pre-commit:
             run: 'gitleaks git --staged --no-banner'
 
           - name: 'lint'
-            run: 'pnpm run check:lint'
+            run: 'node --run check:lint'
 
           - name: 'type'
-            run: 'pnpm run check:type'
+            run: 'node --run check:type'
 
           - name: 'yaml'
             glob: '*.{yaml,yml}'
-            run: 'pnpm run check:yaml'
+            run: 'node --run check:yaml'
 
 pre-push:
   jobs:
