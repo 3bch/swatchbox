@@ -1,23 +1,26 @@
 pre-commit:
   jobs:
-    - name: format
-      run: pnpm run fix:format
+    - name: 'format'
+      run: 'pnpm run fix:format'
       stage_fixed: true
 
-    - name: checks
+    - name: 'checks'
       group:
         parallel: true
         jobs:
-          - name: secret
-            run: gitleaks git --staged --no-banner
+          - name: 'secret'
+            run: 'gitleaks git --staged --no-banner'
 
-          - name: lint
-            run: pnpm run check:lint
+          - name: 'lint'
+            run: 'pnpm run check:lint'
 
-          - name: type
-            run: pnpm run check:type
+          - name: 'type'
+            run: 'pnpm run check:type'
+
+          - name: 'yaml'
+            run: 'pnpm run check:yaml'
 
 pre-push:
   jobs:
-    - name: secret
-      run: gitleaks git --no-banner
+    - name: 'secret'
+      run: 'gitleaks git --no-banner'

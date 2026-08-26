@@ -2,6 +2,6 @@
 - [x] tsconfig 設定
 - [ ] oxlint 設定
     - [x] sort-imports でブロック内だけソート
-- [ ] yaml だけ eslint でチェック
+- [x] yaml だけ eslint でチェック
 - [x] lefthook 設定
 - [x] シークレットスキャン
