@@ -1,48 +1,56 @@
 #!/usr/bin/env bash
 # コミットメッセージに AI エージェントの利用量トレーラーを付与する。
 #
-# ccusage が返すセッション累計と、基準コミットのトレーラーに記録された累計との
-# 差分をとることで、そのコミットに費やした分を概算する。
-#   - 通常のコミットは HEAD、amend は HEAD~1 を基準にする
+# ccusage が返すセッション累計と、同一セッションの直近コミットに記録された累計との
+# 差分をとることで、そのコミットに費やした分を概算する。差分計算用の状態ファイルを
+# 持たずに済むよう、基準となる累計はトレーラー自身に埋め込む。
+#   - 通常のコミットは HEAD、amend は HEAD~1 から遡って基準を探す
 #     （amend では対象コミットに計上済みの分も含めて再計算されるため二重計上にならない）
-#   - 基準コミットのセッション ID が現在のものと異なる場合は、
-#     引き算の基準がないため現在のセッション累計をそのまま計上する
+#   - 別セッションのコミットが間に挟まっていても、同一セッション ID を持つ
+#     直近のコミットまで遡るため差分の基準を見失わない
+#   - 基準が見つからない場合は、引き算せず現在のセッション累計をそのまま計上する
 #   - ccusage session は --id と --sections を併用できないため、
 #     全セッションを取得したうえで現在のセッション ID で絞り込む
+#
+# 付帯情報の付与であり、失敗してもコミット自体は妨げない（常に正常終了する）。
 #
 # 引数は prepare-commit-msg フックのもの。
 # 参照: https://git-scm.com/docs/githooks#_prepare_commit_msg
 set -euo pipefail
 
-msg_file="${1:?コミットメッセージのファイルパスが必要}"
+msg_file="${1:-}"
 commit_source="${2:-}"
 commit_sha="${3:-}"
 
 # エージェント経由でない（人が手で打った）コミットには付与しない。
-if [ -z "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+if [ -z "${CLAUDE_CODE_SESSION_ID:-}" ] || [ ! -f "$msg_file" ]; then
   exit 0
 fi
 
+# ccusage は mise で管理しているため mise 経由で起動する。
+command -v mise >/dev/null 2>&1 || exit 0
+command -v jq >/dev/null 2>&1 || exit 0
+
 session_id="$CLAUDE_CODE_SESSION_ID"
 
-# 第 2 引数が commit かつ第 3 引数にコミットが指定されている場合が amend。
-# amend では対象コミット自身ではなくその親を基準にする。
+# 第 2 引数が commit かつ第 3 引数にコミットが指定されている場合が amend（および -c/-C）。
+# 書き換え対象のコミット自身は基準にできないため、その親から遡る。
 if [ "$commit_source" = 'commit' ] && [ -n "$commit_sha" ]; then
   base_ref='HEAD~1'
 else
   base_ref='HEAD'
 fi
+git rev-parse --verify --quiet "$base_ref" >/dev/null || base_ref=''
 
-# 基準コミットが存在しない（最初のコミットなど）場合は差し引かない。
+# 同一セッションの直近コミットを基準にする。見つからなければ差し引かない。
 base_cost=0; base_input=0; base_output=0; base_cache_creation=0; base_cache_read=0
-if git rev-parse --verify --quiet "$base_ref" >/dev/null; then
-  base_trailers="$(git log -1 --format='%B' "$base_ref" | git interpret-trailers --parse)"
-  read_trailer() {
-    printf '%s\n' "$base_trailers" | sed -n "s/^$1: //p" | tail -1
-  }
-
-  # 別セッションのコミットが基準になる場合、その累計は現在のセッションと連続しない。
-  if [ "$(read_trailer 'Agent-Session-Id')" = "$session_id" ]; then
+if [ -n "$base_ref" ]; then
+  base_commit="$(git log "$base_ref" -n 1 --format='%H' \
+    --grep="^Agent-Session-Id: ${session_id}$" || true)"
+  if [ -n "$base_commit" ]; then
+    read_trailer() {
+      git log "$base_commit" -n 1 --format="%(trailers:key=$1,valueonly)" | head -1
+    }
     base_cost="$(read_trailer 'Agent-Session-Estimated-Cost-USD')"
     base_input="$(read_trailer 'Agent-Session-Tokens-Input')"
     base_output="$(read_trailer 'Agent-Session-Tokens-Output')"
@@ -51,7 +59,7 @@ if git rev-parse --verify --quiet "$base_ref" >/dev/null; then
   fi
 fi
 
-usage_json="$(ccusage session --sections session --json 2>/dev/null || true)"
+usage_json="$(mise exec -- ccusage session --sections session --json 2>/dev/null || true)"
 if [ -z "$usage_json" ]; then
   exit 0
 fi
@@ -67,6 +75,7 @@ values="$(printf '%s' "$usage_json" | jq -r \
   --argjson base_cache_read "${base_cache_read:-0}" '
   # 浮動小数点の誤差が桁あふれしないよう、コストは小数 6 桁に丸める。
   def round6: . * 1000000 | round / 1000000;
+  # 前回値が現在値を上回る異常時は 0 に丸める。
   def diff($total; $base): if $total - $base > 0 then $total - $base else 0 end;
 
   .session[] | select(.period == $id) |
@@ -105,8 +114,12 @@ session_cache_read=''; commit_cache_read=''
 $values
 EOF
 
-git interpret-trailers --in-place \
-  --trailer "Agent-Model: $model" \
+# --if-exists replace により amend でも既存トレーラーが二重にならない。
+# ただし git はキー名を前方一致で比較するため、あるキーが別のキーの接頭辞に
+# なってはならない（例: Agent-Session は Agent-Session-Tokens-Input と衝突して
+# 相互に上書きされる）。キーを追加する際は接頭辞の重複に注意すること。
+git interpret-trailers --in-place --if-exists replace \
+  --trailer "Agent-Model: ${model:-unknown}" \
   --trailer "Agent-Effort: ${CLAUDE_EFFORT:-unknown}" \
   --trailer "Agent-Commit-Estimated-Cost-USD: $commit_cost" \
   --trailer "Agent-Commit-Tokens-Input: $commit_input" \
