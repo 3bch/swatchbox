@@ -25,6 +25,11 @@ pre-commit:
             glob: '*.{yaml,yml}'
             run: 'node --run check:yaml'
 
+prepare-commit-msg:
+  jobs:
+    - name: 'trailer'
+      run: 'bash .claude/commit-trailer.sh {1} {2} {3}'
+
 pre-push:
   jobs:
     - name: 'secret'

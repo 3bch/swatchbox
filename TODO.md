@@ -1,7 +1,7 @@
 - [x] vite 設定
 - [x] tsconfig 設定
 - [x] statusline の警告を黄色に
-- [ ] コミットのトレーラー設定
+- [x] コミットのトレーラー設定
 - [ ] oxlint 設定
     - [x] sort-imports でブロック内だけソート
     - [x] 一旦設定
