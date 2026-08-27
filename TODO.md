@@ -1,11 +1,15 @@
 - [x] vite 設定
 - [x] tsconfig 設定
+- [x] statusline の警告を黄色に
+- [ ] コミットのトレーラー設定
 - [ ] oxlint 設定
     - [x] sort-imports でブロック内だけソート
     - [x] 一旦設定
     - [ ] oxc と eslint 見直し
     - [ ] unicorn 見直し
     - [ ] typescript 見直し
+    - [ ] boundaries の導入
+    - [ ] project structure の導入
 - [x] yaml だけ eslint でチェック
 - [x] lefthook 設定
 - [x] シークレットスキャン
