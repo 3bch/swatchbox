@@ -6,6 +6,7 @@
     - [x] sort-imports でブロック内だけソート
     - [x] 一旦設定
     - [x] oxc と eslint 見直し
+    - [ ] eslint-plugin-etc の prefer-less-than の検討(場合によっては自前実装もあり)
     - [ ] unicorn 見直し
     - [ ] typescript 見直し
     - [ ] boundaries の導入
