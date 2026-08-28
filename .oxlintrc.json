@@ -76,9 +76,55 @@
       }
     ],
 
+    // --- バグ・やり残しの検出 --- //
+    "eslint/array-callback-return": "error",
+    "eslint/no-promise-executor-return": "error",
+    "eslint/no-constructor-return": "error",
+    "eslint/no-self-compare": "error",
+    "eslint/no-loop-func": "error",
+    "eslint/no-unreachable-loop": "error",
+    "eslint/no-useless-assignment": "error",
+    "eslint/no-case-declarations": "error",
+    "eslint/no-inner-declarations": "error",
+    "eslint/no-return-assign": "error",
+
+    // --- 冗長な記述の除去（多くは --fix で自動修正される） --- //
+    "eslint/no-else-return": "error",
+    "eslint/no-lonely-if": "error",
+    "eslint/no-negated-condition": "error",
+    "eslint/arrow-body-style": "error",
+    "eslint/no-useless-computed-key": "error",
+    "eslint/operator-assignment": "error",
+    "eslint/logical-assignment-operators": "error",
+    "eslint/prefer-object-has-own": "error",
+    "eslint/prefer-exponentiation-operator": "error",
+    "eslint/prefer-numeric-literals": "error",
+    "eslint/prefer-regex-literals": "error",
+    "eslint/no-useless-return": "error",
+    "eslint/prefer-arrow-callback": "error",
+    "eslint/symbol-description": "error",
+
+    // --- 書き方の揺れ防止 --- //
+    // 関数式は禁止し、宣言かアロー関数に寄せる
+    "eslint/func-style": ["error", "declaration", { "allowArrowFunctions": true }],
+    "eslint/default-case-last": "error",
+    "eslint/new-cap": "error",
+    "eslint/guard-for-in": "error",
+    "eslint/no-labels": "error",
+
+    // --- エラーの握りつぶしの検出 --- //
+    // 空にする意図があるなら noop などのコメントを書く
+    "eslint/no-empty": "error",
+    "eslint/no-empty-function": "error",
+    "eslint/no-alert": "error",
+    "eslint/no-script-url": "error",
+    "eslint/no-template-curly-in-string": "error",
+
     "oxc/bad-bitwise-operator": "error",
     "oxc/no-barrel-file": "error",
     "oxc/approx-constant": "error",
+    // 分岐の先頭・末尾で重複しているコードを検出する
+    "oxc/branches-sharing-code": "error",
 
     "typescript/array-type": ["error", { "default": "array-simple" }],
     "typescript/consistent-type-definitions": "error",
@@ -193,6 +239,7 @@
     "typescript/only-throw-error": "error",
     "typescript/prefer-promise-reject-errors": "error",
     "typescript/return-await": "error",
+    "typescript/require-await": "error",
     "typescript/no-base-to-string": "error",
     "typescript/restrict-plus-operands": "error",
     "typescript/restrict-template-expressions": "error",
