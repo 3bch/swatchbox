@@ -8,6 +8,9 @@
 #     （amend では対象コミットに計上済みの分も含めて再計算されるため二重計上にならない）
 #   - 別セッションのコミットが間に挟まっていても、同一セッション ID を持つ
 #     直近のコミットまで遡るため差分の基準を見失わない
+#   - 遡る範囲は直近 30 日に限る。セッションがそれ以上生き延びることはないため
+#     取りこぼしはなく、基準が存在しないセッション初回のコミットで
+#     全履歴を走査してしまうのを避けられる
 #   - 基準が見つからない場合は、引き算せず現在のセッション累計をそのまま計上する
 #   - ccusage session は --id と --sections を併用できないため、
 #     全セッションを取得したうえで現在のセッション ID で絞り込む
@@ -45,7 +48,7 @@ git rev-parse --verify --quiet "$base_ref" >/dev/null || base_ref=''
 # 同一セッションの直近コミットを基準にする。見つからなければ差し引かない。
 base_cost=0; base_input=0; base_output=0; base_cache_creation=0; base_cache_read=0
 if [ -n "$base_ref" ]; then
-  base_commit="$(git log "$base_ref" -n 1 --format='%H' \
+  base_commit="$(git log "$base_ref" -n 1 --format='%H' --since='30 days ago' \
     --grep="^Agent-Session-Id: ${session_id}$" || true)"
   if [ -n "$base_commit" ]; then
     read_trailer() {
