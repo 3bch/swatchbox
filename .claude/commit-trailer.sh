@@ -8,6 +8,10 @@
 #     （amend では対象コミットに計上済みの分も含めて再計算されるため二重計上にならない）
 #   - 別セッションのコミットが間に挟まっていても、同一セッション ID を持つ
 #     直近のコミットまで遡るため差分の基準を見失わない
+#   - マージコミットではマージ元の履歴も探索対象に加える。フックが走る時点の HEAD には
+#     マージ元がまだ含まれておらず、同一セッション中にブランチを切って作業していた場合、
+#     HEAD だけを見ると基準を見失って計上済みの分を二重に数えてしまうため
+#     （fast-forward マージはコミットを作らないためフック自体が呼ばれない）
 #   - 遡る範囲は直近 30 日に限る。セッションがそれ以上生き延びることはないため
 #     取りこぼしはなく、基準が存在しないセッション初回のコミットで
 #     全履歴を走査してしまうのを避けられる
@@ -49,16 +53,23 @@ session_id="$CLAUDE_CODE_SESSION_ID"
 # 第 2 引数が commit かつ第 3 引数にコミットが指定されている場合が amend（および -c/-C）。
 # 書き換え対象のコミット自身は基準にできないため、その親から遡る。
 if [ "$commit_source" = 'commit' ] && [ -n "$commit_sha" ]; then
-  base_ref='HEAD~1'
+  base_refs='HEAD~1'
 else
-  base_ref='HEAD'
+  base_refs='HEAD'
 fi
-git rev-parse --verify --quiet "$base_ref" >/dev/null || base_ref=''
+git rev-parse --verify --quiet "$base_refs" >/dev/null || base_refs=''
+
+# マージの最中はマージ元の履歴も探索対象に加える。
+if [ "$commit_source" = 'merge' ] && git rev-parse --verify --quiet MERGE_HEAD >/dev/null 2>&1; then
+  base_refs="${base_refs:+$base_refs }MERGE_HEAD"
+fi
 
 # 同一セッションの直近コミットを基準にする。見つからなければ差し引かない。
 base_cost=0; base_input=0; base_output=0; base_cache_creation=0; base_cache_read=0
-if [ -n "$base_ref" ]; then
-  base_commit="$(git log "$base_ref" -n 1 --format='%H' --since='30 days ago' \
+if [ -n "$base_refs" ]; then
+  # 複数の起点を個別の引数として渡すため、あえてクォートしない。
+  # shellcheck disable=SC2086
+  base_commit="$(git log $base_refs -n 1 --format='%H' --since='30 days ago' \
     --grep="^Agent-Session-Id: ${session_id}$" || true)"
   if [ -n "$base_commit" ]; then
     read_trailer() {
