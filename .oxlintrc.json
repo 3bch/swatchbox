@@ -284,8 +284,10 @@
   },
 
   // shadcn/ui の生成物と TanStack Router の生成ファイルは対象外とする。
+  // .claude 配下のフックスクリプトは tsconfig の include に含まれず型情報を解決できないため、
+  // type aware なルールが軒並み誤検知する。あわせて対象外とする
   // ignorePatterns は先頭に **/ を付けないとマッチしない点に注意
-  "ignorePatterns": ["**/components/ui/**", "**/routeTree.gen.ts"],
+  "ignorePatterns": ["**/components/ui/**", "**/routeTree.gen.ts", "**/.claude/**"],
 
   "overrides": [
     {
