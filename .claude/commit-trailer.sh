@@ -12,8 +12,18 @@
 #     取りこぼしはなく、基準が存在しないセッション初回のコミットで
 #     全履歴を走査してしまうのを避けられる
 #   - 基準が見つからない場合は、引き算せず現在のセッション累計をそのまま計上する
-#   - ccusage session は --id と --sections を併用できないため、
-#     全セッションを取得したうえで現在のセッション ID で絞り込む
+#
+# ccusage session は --id を指定するとリクエスト単位の内訳（entries）を返すため、
+# セッション累計とコンテキスト量の両方をこの 1 回の呼び出しでまかなえる。
+#   - 累計の入出力・キャッシュトークンは entries の合計として算出する
+#     （--sections で ccusage 自身に集計させた値と一致することは確認済み。
+#     --id と --sections は併用できず、両方呼ぶと 1 秒以上余分にかかる）
+#   - コンテキスト量は最新 entry の入力系トークンの和。これはコミット時点の
+#     スナップショットであり累積値ではないため、差分はとらない
+#   - モデル名も同じく最新 entry のものを使う。セッション途中でモデルを
+#     切り替えた場合に全モデルが並ぶのを避け、コミット時点の実態を残す
+#     （モデル名を示す環境変数は Claude Code から渡されない）
+#   - 該当セッションが見つからない場合、ccusage は正常終了して null を返す
 #
 # 付帯情報の付与であり、失敗してもコミット自体は妨げない（常に正常終了する）。
 #
@@ -62,15 +72,14 @@ if [ -n "$base_ref" ]; then
   fi
 fi
 
-usage_json="$(mise exec -- ccusage session --sections session --json 2>/dev/null || true)"
+usage_json="$(mise exec -- ccusage session --id "$session_id" --json 2>/dev/null || true)"
 if [ -z "$usage_json" ]; then
   exit 0
 fi
 
 # セッション累計と、基準との差分をまとめて算出する。
-# 値は「モデル 累計コスト コスト差分 累計入力 入力差分 ...」の順に 1 行ずつ出力する。
+# 値は「モデル コンテキスト 累計コスト コスト差分 累計入力 入力差分 ...」の順に 1 行ずつ出力する。
 values="$(printf '%s' "$usage_json" | jq -r \
-  --arg id "$session_id" \
   --argjson base_cost "${base_cost:-0}" \
   --argjson base_input "${base_input:-0}" \
   --argjson base_output "${base_output:-0}" \
@@ -80,15 +89,22 @@ values="$(printf '%s' "$usage_json" | jq -r \
   def round6: . * 1000000 | round / 1000000;
   # 前回値が現在値を上回る異常時は 0 に丸める。
   def diff($total; $base): if $total - $base > 0 then $total - $base else 0 end;
+  def sum($key): map(.[$key] // 0) | add // 0;
 
-  .session[] | select(.period == $id) |
+  select(. != null) |
+  (.entries // []) as $entries |
+  select(($entries | length) > 0) |
+  ($entries | last) as $latest |
   ((.totalCost // 0) | round6) as $cost |
-  (.inputTokens // 0) as $input |
-  (.outputTokens // 0) as $output |
-  (.cacheCreationTokens // 0) as $cache_creation |
-  (.cacheReadTokens // 0) as $cache_read |
+  ($entries | sum("inputTokens")) as $input |
+  ($entries | sum("outputTokens")) as $output |
+  ($entries | sum("cacheCreationTokens")) as $cache_creation |
+  ($entries | sum("cacheReadTokens")) as $cache_read |
+  # コンテキスト量は最新リクエストが読み込んだ入力系トークンの総和。
+  ($latest | (.inputTokens // 0) + (.cacheCreationTokens // 0) + (.cacheReadTokens // 0)) as $context |
   [
-    (.modelsUsed // [] | join(",")),
+    ($latest.model // ""),
+    ($context | tostring),
     ($cost | tostring), (diff($cost; $base_cost) | round6 | tostring),
     ($input | tostring), (diff($input; $base_input) | tostring),
     ($output | tostring), (diff($output; $base_output) | tostring),
@@ -100,7 +116,7 @@ if [ -z "$values" ]; then
   exit 0
 fi
 
-model=''
+model=''; context_tokens=''
 session_cost=''; commit_cost=''
 session_input=''; commit_input=''
 session_output=''; commit_output=''
@@ -108,6 +124,7 @@ session_cache_creation=''; commit_cache_creation=''
 session_cache_read=''; commit_cache_read=''
 {
   IFS= read -r model || :
+  IFS= read -r context_tokens || :
   IFS= read -r session_cost || :; IFS= read -r commit_cost || :
   IFS= read -r session_input || :; IFS= read -r commit_input || :
   IFS= read -r session_output || :; IFS= read -r commit_output || :
@@ -124,6 +141,7 @@ EOF
 git interpret-trailers --in-place --if-exists replace \
   --trailer "Agent-Model: ${model:-unknown}" \
   --trailer "Agent-Effort: ${CLAUDE_EFFORT:-unknown}" \
+  --trailer "Agent-Context-Tokens: $context_tokens" \
   --trailer "Agent-Commit-Estimated-Cost-USD: $commit_cost" \
   --trailer "Agent-Commit-Tokens-Input: $commit_input" \
   --trailer "Agent-Commit-Tokens-Output: $commit_output" \
