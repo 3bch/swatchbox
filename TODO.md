@@ -3,10 +3,11 @@
 - [x] statusline の警告を黄色に
 - [x] コミットのトレーラー設定
     - [x] merge の際にうまく動くのか確認
-    - [x] コンテキストトークン数の記録
+    - [ ] コンテキストトークン数の記録（別の求め方の検討）
     - [x] TypeScript 版への移行
     - [ ] commit-trailer の単体テストの追加
-    - [ ] bash 版（.claude/commit-trailer.sh）の削除判断
+    - [ ] execa や zod の検討
+    - [x] bash 版（.claude/commit-trailer.sh）の削除判断
     - [ ] .claude 配下を型チェック・lint の対象に含めるか検討
 - [ ] oxlint 設定
     - [x] sort-imports でブロック内だけソート

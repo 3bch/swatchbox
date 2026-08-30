@@ -28,8 +28,6 @@ pre-commit:
 prepare-commit-msg:
   jobs:
     - name: 'trailer'
-      # bash 版（.claude/commit-trailer.sh）も等価な実装として残してある。
-      # 切り戻す場合は run を 'bash .claude/commit-trailer.sh {1} {2} {3}' に変更する
       run: 'node .claude/commit-trailer.ts {1} {2} {3}'
 
 pre-push:

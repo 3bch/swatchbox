@@ -17,17 +17,21 @@
 //     全履歴を走査してしまうのを避けられる
 //   - 基準が見つからない場合は、引き算せず現在のセッション累計をそのまま計上する
 //
-// ccusage session は --id を指定するとリクエスト単位の内訳（entries）を返すため、
-// セッション累計とコンテキスト量の両方をこの 1 回の呼び出しでまかなえる。
-//   - 累計の入出力・キャッシュトークンは entries の合計として算出する
-//     （--sections で ccusage 自身に集計させた値と一致することは確認済み。
-//     --id と --sections は併用できず、両方呼ぶと 1 秒以上余分にかかる）
-//   - コンテキスト量は最新 entry の入力系トークンの和。これはコミット時点の
-//     スナップショットであり累積値ではないため、差分はとらない
-//   - モデル名も同じく最新 entry のものを使う。セッション途中でモデルを
-//     切り替えた場合に全モデルが並ぶのを避け、コミット時点の実態を残す
-//     （モデル名を示す環境変数は Claude Code から渡されない）
-//   - 該当セッションが見つからない場合、ccusage は正常終了して null を返す
+// ccusage session はエージェント横断のセッション一覧を返す。セッション ID は period に
+// 入るので、そこで突き合わせれば特定のエージェント向けのオプションに依存せずに済む。
+//   - 以前はリクエスト単位の内訳（--id が返す entries）を合計していたが、これは
+//     Claude Code が書く JSONL をほぼそのまま写したものだった。同一リクエストが
+//     複数行に重複して現れるため、ccusage 側の重複排除の有無だけでセッション累計が
+//     倍近く変わった実績がある。--id 自体もドキュメントに記載がなく、unified 側に
+//     生えていないバージョンも存在した。行の集計値は entries の合計と一致する
+//   - モデル名は modelBreakdowns の差分から求め、トークンが増えたモデルを増分の
+//     多い順に並べる。セッション途中でモデルを切り替えてもコミット時点の実態が残る
+//     （モデル名を示す環境変数は Claude Code から渡されない）。増分が無いとき
+//     （コミット直後の amend など）は基準コミットの値を引き継ぐ
+//   - コンテキスト量の記録は取りやめた。entries の末尾から求めていたが、末尾が
+//     バックグラウンドの副次的な呼び出しだと、そちらの小さなコンテキストを拾って
+//     しまう。別の求め方が見つかれば改めて足す
+//   - 該当するセッションが見つからない場合は何も付けない
 //
 // 付帯情報の付与であり、失敗してもコミット自体は妨げない（常に正常終了する）。
 //
@@ -37,17 +41,28 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import process from "node:process";
 
-/** リクエスト単位の利用量（ccusage session --id が返す entries の要素） */
-type Entry = {
-  model: string;
+/** モデル別の利用量（ccusage が返す modelBreakdowns の要素） */
+type Breakdown = {
+  modelName: string;
   inputTokens: number;
   outputTokens: number;
   cacheCreationTokens: number;
   cacheReadTokens: number;
 };
 
-/** セッションの利用量。該当するセッションがなければ null が返る */
-type Usage = { totalCost: number; entries: Entry[] } | null;
+/** セッション単位の利用量（ccusage session が返す session 配列の要素） */
+type Session = {
+  period: string;
+  totalCost: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  modelBreakdowns: Breakdown[];
+};
+
+/** Ccusage session --json が返すレポート全体 */
+type Report = { session?: Session[] };
 
 /** 累計と差分の組。トレーラーには両方を記録する */
 type Amount = { session: number; commit: number };
@@ -72,6 +87,35 @@ const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
 
 /** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
 const diff = (total: number, base: number): number => (total - base > 0 ? total - base : 0);
+
+/** ModelBreakdowns をモデル名から総トークン数への対応に畳む */
+const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
+  new Map(
+    breakdowns.map((breakdown) => [
+      breakdown.modelName,
+      (breakdown.inputTokens || 0) +
+        (breakdown.outputTokens || 0) +
+        (breakdown.cacheCreationTokens || 0) +
+        (breakdown.cacheReadTokens || 0),
+    ]),
+  );
+
+/** モデル別トークン数をトレーラー 1 行分の文字列にする */
+const formatModelTokens = (tokens: Map<string, number>): string =>
+  [...tokens].map(([name, total]) => `${name}=${total}`).join(",");
+
+// 値が壊れていた要素は捨てる。そのモデルは差分の基準を失って累計がそのまま
+// 計上されるだけで、トレーラーの付与自体は妨げない。
+/** FormatModelTokens の逆変換 */
+const parseModelTokens = (value: string): Map<string, number> => {
+  const tokens = new Map<string, number>();
+  for (const part of value.split(",")) {
+    const separator = part.lastIndexOf("=");
+    if (separator <= 0) continue;
+    tokens.set(part.slice(0, separator), Number(part.slice(separator + 1)) || 0);
+  }
+  return tokens;
+};
 
 /** コミットメッセージにトレーラーを付与する */
 const main = (): void => {
@@ -105,48 +149,49 @@ const main = (): void => {
           "--since=30 days ago",
           `--grep=^Agent-Session-Id: ${sessionId}$`,
         );
-  const base = (key: string): number =>
+  const baseTrailer = (key: string): string =>
     baseCommit === ""
-      ? 0
-      : Number(
-          git("log", baseCommit, "-n", "1", `--format=%(trailers:key=${key},valueonly)`).split(
-            "\n",
-          )[0],
-        ) || 0;
+      ? ""
+      : (git("log", baseCommit, "-n", "1", `--format=%(trailers:key=${key},valueonly)`).split(
+          "\n",
+        )[0] ?? "");
+  const base = (key: string): number => Number(baseTrailer(key)) || 0;
 
   // ccusage は mise で管理しているため mise 経由で起動する。
-  const usage: Usage = JSON.parse(
-    run("mise", ["exec", "--", "ccusage", "session", "--id", sessionId, "--json"]),
-  );
-  const entries = usage?.entries ?? [];
-  const latest = entries.at(-1);
-  if (latest === undefined) return;
+  const report: Report = JSON.parse(run("mise", ["exec", "--", "ccusage", "session", "--json"]));
+  const usage = report.session?.find((entry) => entry.period === sessionId);
+  if (usage === undefined) return;
 
-  const sum = (key: keyof Omit<Entry, "model">): number =>
-    entries.reduce((acc, e) => acc + (e[key] || 0), 0);
   const amount = (total: number, baseKey: string): Amount => ({
     session: total,
     commit: diff(total, base(baseKey)),
   });
 
-  const cost = amount(round6(usage?.totalCost ?? 0), "Agent-Session-Estimated-Cost-USD");
-  const input = amount(sum("inputTokens"), "Agent-Session-Tokens-Input");
-  const output = amount(sum("outputTokens"), "Agent-Session-Tokens-Output");
-  const cacheCreation = amount(sum("cacheCreationTokens"), "Agent-Session-Tokens-Cache-Creation");
-  const cacheRead = amount(sum("cacheReadTokens"), "Agent-Session-Tokens-Cache-Read");
+  const cost = amount(round6(usage.totalCost || 0), "Agent-Session-Estimated-Cost-USD");
+  const input = amount(usage.inputTokens || 0, "Agent-Session-Tokens-Input");
+  const output = amount(usage.outputTokens || 0, "Agent-Session-Tokens-Output");
+  const cacheCreation = amount(
+    usage.cacheCreationTokens || 0,
+    "Agent-Session-Tokens-Cache-Creation",
+  );
+  const cacheRead = amount(usage.cacheReadTokens || 0, "Agent-Session-Tokens-Cache-Read");
 
-  // コンテキスト量は最新リクエストが読み込んだ入力系トークンの総和。
-  const context =
-    (latest.inputTokens || 0) + (latest.cacheCreationTokens || 0) + (latest.cacheReadTokens || 0);
+  // このコミットまでにトークンが増えたモデルを、増分の多い順に並べる。
+  const tokens = modelTokens(usage.modelBreakdowns ?? []);
+  const baseTokens = parseModelTokens(baseTrailer("Agent-Session-Model-Tokens"));
+  const models = [...tokens]
+    .map(([name, total]): [string, number] => [name, diff(total, baseTokens.get(name) ?? 0)])
+    .filter(([, increase]) => increase > 0)
+    .sort(([, left], [, right]) => right - left)
+    .map(([name]) => name);
 
   // --if-exists replace により amend でも既存トレーラーが二重にならない。
   // ただし git はキー名を前方一致で比較するため、あるキーが別のキーの接頭辞に
   // なってはならない（例: Agent-Session は Agent-Session-Tokens-Input と衝突して
   // 相互に上書きされる）。キーを追加する際は接頭辞の重複に注意すること。
   const trailers: Record<string, string | number> = {
-    "Agent-Model": latest.model || "unknown",
+    "Agent-Model": models.join(", ") || baseTrailer("Agent-Model") || "unknown",
     "Agent-Effort": process.env["CLAUDE_EFFORT"] ?? "unknown",
-    "Agent-Context-Tokens": context,
     "Agent-Commit-Estimated-Cost-USD": round6(cost.commit),
     "Agent-Commit-Tokens-Input": input.commit,
     "Agent-Commit-Tokens-Output": output.commit,
@@ -158,6 +203,7 @@ const main = (): void => {
     "Agent-Session-Tokens-Output": output.session,
     "Agent-Session-Tokens-Cache-Creation": cacheCreation.session,
     "Agent-Session-Tokens-Cache-Read": cacheRead.session,
+    "Agent-Session-Model-Tokens": formatModelTokens(tokens),
   };
 
   git(
