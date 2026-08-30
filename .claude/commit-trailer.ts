@@ -24,6 +24,8 @@
 //     複数行に重複して現れるため、ccusage 側の重複排除の有無だけでセッション累計が
 //     倍近く変わった実績がある。--id 自体もドキュメントに記載がなく、unified 側に
 //     生えていないバージョンも存在した。行の集計値は entries の合計と一致する
+//   - 受け取った JSON はスキーマで検証する。上記のとおり ccusage の出力は変わりうるので、
+//     欠けたフィールドを 0 とみなして誤った数字を残すより、何も付けずに終わるほうがよい
 //   - モデル名は modelBreakdowns の差分から求め、トークンが増えたモデルを増分の
 //     多い順に並べる。セッション途中でモデルを切り替えてもコミット時点の実態が残る
 //     （モデル名を示す環境変数は Claude Code から渡されない）。増分が無いとき
@@ -37,50 +39,49 @@
 //
 // 引数は prepare-commit-msg フックのもの。
 // 参照: https://git-scm.com/docs/githooks#_prepare_commit_msg
-import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import process from "node:process";
 
+import { xSync } from "tinyexec";
+import { z } from "zod";
+
 /** モデル別の利用量（ccusage が返す modelBreakdowns の要素） */
-type Breakdown = {
-  modelName: string;
-  inputTokens: number;
-  outputTokens: number;
-  cacheCreationTokens: number;
-  cacheReadTokens: number;
-};
+const Breakdown = z.object({
+  modelName: z.string(),
+  inputTokens: z.number(),
+  outputTokens: z.number(),
+  cacheCreationTokens: z.number(),
+  cacheReadTokens: z.number(),
+});
 
 /** セッション単位の利用量（ccusage session が返す session 配列の要素） */
-type Session = {
-  period: string;
-  totalCost: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheCreationTokens: number;
-  cacheReadTokens: number;
-  modelBreakdowns: Breakdown[];
-};
+const Session = z.object({
+  period: z.string(),
+  totalCost: z.number(),
+  inputTokens: z.number(),
+  outputTokens: z.number(),
+  cacheCreationTokens: z.number(),
+  cacheReadTokens: z.number(),
+  modelBreakdowns: z.array(Breakdown),
+});
 
-/** Ccusage session --json が返すレポート全体 */
-type Report = { session?: Session[] };
+/** ccusage session --json が返すレポート全体 */
+const Report = z.object({ session: z.array(Session) });
+
+/** モデル別の利用量 */
+type Breakdown = z.infer<typeof Breakdown>;
 
 /** 累計と差分の組。トレーラーには両方を記録する */
 type Amount = { session: number; commit: number };
 
+// 終了コードは見ない。存在しない参照の問い合わせなど、非ゼロ終了が異常ではなく
+// 分岐の材料になる呼び出しがあるため。コマンド自体を起動できない場合は例外になり、
+// トレーラーを付けずに終わる。
 /** 外部コマンドを実行して標準出力を返す */
-const run = (command: string, args: string[]): string =>
-  execFileSync(command, args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+const run = (command: string, args: string[]): string => xSync(command, args).stdout.trim();
 
-// 存在しない参照を問い合わせたときの非ゼロ終了は異常ではなく分岐の材料なので、
-// 例外にせず空文字に変換する。
 /** 実行した git コマンドの標準出力を返す */
-const git = (...args: string[]): string => {
-  try {
-    return run("git", args);
-  } catch {
-    return "";
-  }
-};
+const git = (...args: string[]): string => run("git", args);
 
 /** 浮動小数点の誤差が桁あふれしないよう、コストを小数 6 桁に丸める */
 const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
@@ -88,15 +89,15 @@ const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
 /** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
 const diff = (total: number, base: number): number => (total - base > 0 ? total - base : 0);
 
-/** ModelBreakdowns をモデル名から総トークン数への対応に畳む */
+/** modelBreakdowns をモデル名から総トークン数への対応に畳む */
 const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
   new Map(
     breakdowns.map((breakdown) => [
       breakdown.modelName,
-      (breakdown.inputTokens || 0) +
-        (breakdown.outputTokens || 0) +
-        (breakdown.cacheCreationTokens || 0) +
-        (breakdown.cacheReadTokens || 0),
+      breakdown.inputTokens +
+        breakdown.outputTokens +
+        breakdown.cacheCreationTokens +
+        breakdown.cacheReadTokens,
     ]),
   );
 
@@ -106,7 +107,7 @@ const formatModelTokens = (tokens: Map<string, number>): string =>
 
 // 値が壊れていた要素は捨てる。そのモデルは差分の基準を失って累計がそのまま
 // 計上されるだけで、トレーラーの付与自体は妨げない。
-/** FormatModelTokens の逆変換 */
+/** formatModelTokens の逆変換 */
 const parseModelTokens = (value: string): Map<string, number> => {
   const tokens = new Map<string, number>();
   for (const part of value.split(",")) {
@@ -158,8 +159,10 @@ const main = (): void => {
   const base = (key: string): number => Number(baseTrailer(key)) || 0;
 
   // ccusage は mise で管理しているため mise 経由で起動する。
-  const report: Report = JSON.parse(run("mise", ["exec", "--", "ccusage", "session", "--json"]));
-  const usage = report.session?.find((entry) => entry.period === sessionId);
+  const report = Report.parse(
+    JSON.parse(run("mise", ["exec", "--", "ccusage", "session", "--json"])),
+  );
+  const usage = report.session.find((entry) => entry.period === sessionId);
   if (usage === undefined) return;
 
   const amount = (total: number, baseKey: string): Amount => ({
@@ -167,17 +170,14 @@ const main = (): void => {
     commit: diff(total, base(baseKey)),
   });
 
-  const cost = amount(round6(usage.totalCost || 0), "Agent-Session-Estimated-Cost-USD");
-  const input = amount(usage.inputTokens || 0, "Agent-Session-Tokens-Input");
-  const output = amount(usage.outputTokens || 0, "Agent-Session-Tokens-Output");
-  const cacheCreation = amount(
-    usage.cacheCreationTokens || 0,
-    "Agent-Session-Tokens-Cache-Creation",
-  );
-  const cacheRead = amount(usage.cacheReadTokens || 0, "Agent-Session-Tokens-Cache-Read");
+  const cost = amount(round6(usage.totalCost), "Agent-Session-Estimated-Cost-USD");
+  const input = amount(usage.inputTokens, "Agent-Session-Tokens-Input");
+  const output = amount(usage.outputTokens, "Agent-Session-Tokens-Output");
+  const cacheCreation = amount(usage.cacheCreationTokens, "Agent-Session-Tokens-Cache-Creation");
+  const cacheRead = amount(usage.cacheReadTokens, "Agent-Session-Tokens-Cache-Read");
 
   // このコミットまでにトークンが増えたモデルを、増分の多い順に並べる。
-  const tokens = modelTokens(usage.modelBreakdowns ?? []);
+  const tokens = modelTokens(usage.modelBreakdowns);
   const baseTokens = parseModelTokens(baseTrailer("Agent-Session-Model-Tokens"));
   const models = [...tokens]
     .map(([name, total]): [string, number] => [name, diff(total, baseTokens.get(name) ?? 0)])
@@ -219,5 +219,5 @@ const main = (): void => {
 try {
   main();
 } catch {
-  // ccusage が無い、壊れた JSON が返った等。何も付けずに正常終了する。
+  // ccusage が無い、スキーマに合わない JSON が返った等。何も付けずに正常終了する。
 }

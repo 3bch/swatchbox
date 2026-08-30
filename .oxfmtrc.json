@@ -5,7 +5,9 @@
     "ignoreCase": false
   },
   "jsdoc": {
-    "addDefaultToDescription": false
+    "addDefaultToDescription": false,
+    // 日本語の説明を英字の識別子から書き始めることが多く、勝手に大文字化されると壊れる
+    "capitalizeDescriptions": false
   },
   "overrides": [
     {

@@ -6,7 +6,7 @@
     - [ ] コンテキストトークン数の記録（別の求め方の検討）
     - [x] TypeScript 版への移行
     - [ ] commit-trailer の単体テストの追加
-    - [ ] execa や zod の検討
+    - [x] execa や zod の検討
     - [x] bash 版（.claude/commit-trailer.sh）の削除判断
     - [ ] .claude 配下を型チェック・lint の対象に含めるか検討
 - [ ] oxlint 設定
