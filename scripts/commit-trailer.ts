@@ -90,7 +90,7 @@ const git = (...args: string[]): string => run("git", args);
 const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
 
 /** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
-const diff = (total: number, base: number): number => (total - base > 0 ? total - base : 0);
+const diff = (total: number, base: number): number => Math.max(total - base, 0);
 
 /** modelBreakdowns をモデル名から総トークン数への対応に畳む */
 const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
@@ -190,7 +190,7 @@ const main = (): void => {
   const baseTokens = parseModelTokens(baseTrailer("Agent-Session-Model-Tokens"));
   const models = [...tokens]
     .map(([name, total]): [string, number] => [name, diff(total, baseTokens.get(name) ?? 0)])
-    .filter(([, increase]) => increase > 0)
+    .filter(([, increase]) => 0 < increase)
     .toSorted(([, left], [, right]) => right - left)
     .map(([name]) => name);
 

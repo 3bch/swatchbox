@@ -158,6 +158,14 @@ mise は更新時に旧バージョンのディレクトリを削除するが、
 つまり表示されたバージョンはそのまま更新でき、registry の実際の最新版とは異なることがあるが、
 それは意図した除外である。「outdated に出ているのに上がらない」という状況にはならない。
 
+### oxlint と @oxlint/plugins はバージョンを揃える
+
+`oxlint-plugin/` の自前ルールは `@oxlint/plugins` の型に依存しており、
+同パッケージは oxlint と同一バージョンで公開されている。片方だけを上げないこと。
+
+JS plugin（`jsPlugins`）は alpha で semver の対象外のため、oxlint を上げた後は
+`node --run check:lint` が自前ルールを読み込めているかを確認する。
+
 ### mise と npm でバージョンの見え方が食い違うことがある
 
 mise はツールごとに backend が異なる（`mise registry <tool>` で確認できる）。例えば pnpm は

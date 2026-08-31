@@ -13,11 +13,14 @@
     - [x] sort-imports でブロック内だけソート
     - [x] 一旦設定
     - [x] oxc と eslint 見直し
-    - [ ] eslint-plugin-etc の prefer-less-than の検討(場合によっては自前実装もあり)
+    - [x] eslint-plugin-etc の prefer-less-than の検討(場合によっては自前実装もあり)
+        - [x] JS plugin で local/prefer-less-than として自前実装（oxlint-plugin/）
+        - [ ] RuleTester による単体テストの追加（vitest 導入後）
     - [ ] unicorn 見直し
     - [ ] typescript 見直し
     - [ ] boundaries の導入
     - [ ] project structure の導入
+- [ ] vitest の導入（oxlint-plugin の RuleTester テストと commit-trailer の単体テストの受け皿）
 - [x] yaml だけ eslint でチェック
 - [x] lefthook 設定
 - [x] シークレットスキャン

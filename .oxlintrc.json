@@ -14,6 +14,9 @@
     "jsdoc"
   ],
 
+  // このリポジトリ専用のルール。実装は oxlint-plugin/ にある
+  "jsPlugins": ["./oxlint-plugin/index.ts"],
+
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -33,6 +36,9 @@
     // oxfmt の sortImports は import 宣言の並べ替えのみ行うため、
     // 宣言内の specifier のソートは oxlint 側で担当する
     "eslint/sort-imports": ["error", { "ignoreDeclarationSort": true }],
+
+    // 比較演算子の向きを `<` / `<=` に統一する（自前実装のルール）
+    "local/prefer-less-than": "error",
 
     "eslint/eqeqeq": "error",
     "eslint/no-var": "error",

@@ -113,11 +113,32 @@ AI エージェントがコードを書く前提で、次の 3 点を基準に�
   マージされたら `no-warning-comments` の代わりに導入を検討する
 - **`yoda` の `exceptRange` / `onlyEquality` オプションが未対応**。
   スキーマ上も `"never"` / `"always"` の文字列しか受け付けない
-- **`no-restricted-syntax` 自体が未実装**。AST セレクタによる独自ルールは書けない。
-  比較演算子の向きを `<` / `<=` に統一するルールは oxlint・ESLint 本体のいずれにもないが、
-  サードパーティの `eslint-plugin-etc` に `etc/prefer-less-than` がある。
-  ただし v2.0.3（2023-05-10）が最新でほぼ更新が止まっており、
-  導入するには ESLint 側に TypeScript パーサごと持ち込む必要がある
+- **`no-restricted-syntax` 自体が未実装**。設定ファイルに AST セレクタを書くだけで
+  独自ルールを足すことはできない。ただし JS plugin（後述）で代替できる
+
+## JS plugin による自前ルール
+
+`jsPlugins` に指定したファイルから、ESLint v9 互換の API で独自ルールを実装できる。
+実装は `oxlint-plugin/` に置き、`local/*` として設定から参照する。
+
+- AST traversal / セレクタ / fix / rule options / SourceCode API / スコープ解析 /
+  `// oxlint-disable` / LSP のいずれも動く。**型情報を必要とするルールだけは書けない**
+  （型認識ルールは oxlint-tsgolint の担当）
+- 型は `@oxlint/plugins` から取る。`oxlint/plugins-dev` は `RuleTester` しか
+  export しておらず、`Rule` や `Context` は参照できない。
+  `@oxlint/plugins` は oxlint と同一バージョンである必要があるため、更新時は両者を揃えること
+- セレクタ文字列（`"BinaryExpression[operator=/^>=?$/]"`）でハンドラを書くと、
+  引数が全ノードのユニオンになって型が付かない。ノード名のハンドラを使い、
+  条件は本体で判定するほうが型の恩恵を受けられる
+- `jsPlugins` は alpha で semver の対象外。oxlint の更新時は動作を確認すること
+
+実装済みのルール:
+
+- `local/prefer-less-than` — 比較演算子の向きを `<` / `<=` に統一する。
+  `eslint-plugin-etc` の `etc/prefer-less-than` 相当（本家は v2.0.3（2023-05-10）が最新で
+  ほぼ更新が止まっており、導入するには ESLint 側に TypeScript パーサごと持ち込む必要があった）。
+  自動修正は付けていない。オペランドの入れ替えは評価順序を変え、
+  副作用のある式では意味が変わってしまうため
 
 ## 次の見直しの材料
 
