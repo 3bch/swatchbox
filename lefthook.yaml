@@ -28,7 +28,7 @@ pre-commit:
 prepare-commit-msg:
   jobs:
     - name: 'trailer'
-      run: 'node .claude/commit-trailer.ts {1} {2} {3}'
+      run: 'node scripts/commit-trailer.ts {1} {2} {3}'
 
 pre-push:
   jobs:

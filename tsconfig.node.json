@@ -1,0 +1,37 @@
+// Node が直接実行するコード。バンドラを挟まないため nodenext 解決とし、
+// 拡張子を省略した相対 import が実行時まで見逃されないようにする。
+// vite.config.ts は Vite が bundle して実行するが、内部 import は subpath alias
+// （#/*）で書くため拡張子を省略できず、bundler 解決を選ぶ利点がないので同じ扱いとする。
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+
+    "target": "es2025",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2025"],
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUncheckedSideEffectImports": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["vite.config.ts", "scripts"]
+}

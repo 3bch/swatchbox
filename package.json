@@ -12,7 +12,7 @@
     "check": "pnpm run --sequential --no-bail \"/^check:/\"",
     "check:lint": "oxlint",
     "check:format": "oxfmt --check",
-    "check:type": "tsc --noEmit",
+    "check:type": "tsc --build",
     "check:yaml": "eslint",
     "fix:lint": "oxlint --fix",
     "fix:format": "oxfmt --write",

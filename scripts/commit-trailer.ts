@@ -72,7 +72,10 @@ const Report = z.object({ session: z.array(Session) });
 type Breakdown = z.infer<typeof Breakdown>;
 
 /** 累計と差分の組。トレーラーには両方を記録する */
-type Amount = { session: number; commit: number };
+interface Amount {
+  session: number;
+  commit: number;
+}
 
 // 終了コードは見ない。存在しない参照の問い合わせなど、非ゼロ終了が異常ではなく
 // 分岐の材料になる呼び出しがあるため。コマンド自体を起動できない場合は例外になり、
@@ -112,7 +115,9 @@ const parseModelTokens = (value: string): Map<string, number> => {
   const tokens = new Map<string, number>();
   for (const part of value.split(",")) {
     const separator = part.lastIndexOf("=");
-    if (separator <= 0) continue;
+    if (separator <= 0) {
+      continue;
+    }
     tokens.set(part.slice(0, separator), Number(part.slice(separator + 1)) || 0);
   }
   return tokens;
@@ -124,7 +129,9 @@ const main = (): void => {
   const sessionId = process.env["CLAUDE_CODE_SESSION_ID"] ?? "";
 
   // エージェント経由でない（人が手で打った）コミットには付与しない。
-  if (sessionId === "" || msgFile === undefined || !existsSync(msgFile)) return;
+  if (sessionId === "" || msgFile === undefined || !existsSync(msgFile)) {
+    return;
+  }
 
   // 第 2 引数が commit かつ第 3 引数にコミットが指定されている場合が amend（および -c/-C）。
   // 書き換え対象のコミット自身は基準にできないため、その親から遡る。
@@ -163,7 +170,9 @@ const main = (): void => {
     JSON.parse(run("mise", ["exec", "--", "ccusage", "session", "--json"])),
   );
   const usage = report.session.find((entry) => entry.period === sessionId);
-  if (usage === undefined) return;
+  if (usage === undefined) {
+    return;
+  }
 
   const amount = (total: number, baseKey: string): Amount => ({
     session: total,
@@ -182,7 +191,7 @@ const main = (): void => {
   const models = [...tokens]
     .map(([name, total]): [string, number] => [name, diff(total, baseTokens.get(name) ?? 0)])
     .filter(([, increase]) => increase > 0)
-    .sort(([, left], [, right]) => right - left)
+    .toSorted(([, left], [, right]) => right - left)
     .map(([name]) => name);
 
   // --if-exists replace により amend でも既存トレーラーが二重にならない。

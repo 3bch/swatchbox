@@ -216,11 +216,13 @@
     // TypeScript では type は不要なので OFF
     "jsdoc/require-property-type": "off",
     "jsdoc/empty-tags": "error",
-    // props の分割代入まで @param を要求されると型定義と二重管理になるため除外する
-    "jsdoc/require-param": ["error", { "checkDestructuredRoots": false }],
+    // @param と @returns を書くかどうかは型注釈から自明かどうかで決めるため、
+    // 一律に要求はしない（判断基準は CLAUDE.md の開発ルールを参照）。
+    // 書いた場合の中身は以下のルールで担保する
+    "jsdoc/require-param": "off",
+    "jsdoc/require-returns": "off",
     "jsdoc/require-param-description": "error",
     "jsdoc/require-param-name": "error",
-    "jsdoc/require-returns": "error",
     "jsdoc/require-returns-description": "error",
     "jsdoc/check-tag-names": ["error", { "typed": true }],
 
@@ -284,27 +286,6 @@
   },
 
   // shadcn/ui の生成物と TanStack Router の生成ファイルは対象外とする。
-  // .claude 配下のフックスクリプトは tsconfig の include に含まれず型情報を解決できないため、
-  // type aware なルールが軒並み誤検知する。あわせて対象外とする
   // ignorePatterns は先頭に **/ を付けないとマッチしない点に注意
-  "ignorePatterns": ["**/components/ui/**", "**/routeTree.gen.ts", "**/.claude/**"],
-
-  "overrides": [
-    {
-      // コンポーネントの @returns は JSX を返すとしか書けず情報量がないため除外する
-      "files": ["**/*.tsx"],
-      "rules": {
-        "jsdoc/require-returns": "off",
-        "jsdoc/require-returns-description": "off"
-      }
-    },
-    {
-      // テストコードには jsdoc を求めない
-      "files": ["**/*.test.ts", "**/*.test.tsx", "src/test/**"],
-      "rules": {
-        "jsdoc/require-param": "off",
-        "jsdoc/require-returns": "off"
-      }
-    }
-  ]
+  "ignorePatterns": ["**/components/ui/**", "**/routeTree.gen.ts"]
 }

@@ -8,7 +8,7 @@
     - [ ] commit-trailer の単体テストの追加
     - [x] execa や zod の検討
     - [x] bash 版（.claude/commit-trailer.sh）の削除判断
-    - [ ] .claude 配下を型チェック・lint の対象に含めるか検討
+    - [x] scripts/ へ移して型チェック・lint の対象に含める
 - [ ] oxlint 設定
     - [x] sort-imports でブロック内だけソート
     - [x] 一旦設定
