@@ -3,7 +3,7 @@
 # 表示形式: {MODEL} ({EFFORT}) | Context: n%
 #   - EFFORT 非対応のモデルでは () ごと省略
 #   - コンテキスト使用率が取れない場合は "| Context: n%" ごと省略
-#   - 使用率が 20% を超えたら黄色
+#   - 使用率が 20% 以上になったら黄色
 #
 # stdin にステータスライン用の JSON ペイロードが渡される。
 # 参照: https://docs.claude.com/en/docs/claude-code/statusline
@@ -30,7 +30,7 @@ line="$model"
 [ -n "$effort" ] && line="$line ($effort)"
 
 if [ -n "$pct" ]; then
-  if [ "$pct" -gt 20 ]; then
+  if [ "$pct" -ge 20 ]; then
     line="$line | Context: ${YELLOW}${pct}%${RESET}"
   else
     line="$line | Context: ${pct}%"
