@@ -3,7 +3,8 @@
 - [x] statusline の警告を黄色に
 - [x] コミットのトレーラー設定
     - [x] merge の際にうまく動くのか確認
-    - [ ] コンテキストトークン数の記録（別の求め方の検討）
+    - [x] コンテキストトークン数の記録（別の求め方の検討）
+    - [x] Request 数、Tool 呼び出し回数、 Skill 呼び出し回数、の記録
     - [x] TypeScript 版への移行
     - [ ] commit-trailer の単体テストの追加
     - [x] execa や zod の検討
