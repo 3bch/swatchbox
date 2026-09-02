@@ -296,23 +296,71 @@
     // default export と named export を併せ持つパッケージで誤検知するため OFF
     "import/no-named-as-default-member": "off",
 
+    // --- react --- //
+    // categories で自動的に有効になるものは unicorn と同様にここへ書かない
+    // （exhaustive-deps / no-array-index-key / purity / immutability など）。
+    // 選定の詳細は oxlint-rules-research.md を参照
+
     // React 17 以降は不要なルールなので OFF
     "react/react-in-jsx-scope": "off",
-    "react/no-danger": "error",
-    "react/rules-of-hooks": "error",
-    "react/exhaustive-deps": "error",
-    "react/no-array-index-key": "error",
+
+    // --- コンポーネントの書き方の統一 --- //
+    // 関数コンポーネントは関数宣言に固定する。ジェネリックを素直に書けること
+    // （アローは .tsx で `<T,>` のカンマが必要、FC では型引数を束縛できない）と、
+    // ラップしても名前が残ることが理由。ヘルパー関数はこれまでどおりアロー関数でよい。
+    // HOC に渡す無名コンポーネントはアロー・関数式のどちらも許す
+    "react/function-component-definition": [
+      "error",
+      {
+        "namedComponents": "function-declaration",
+        "unnamedComponents": ["arrow-function", "function-expression"]
+      }
+    ],
+    "react/prefer-function-component": "error",
+    "react/hook-use-state": "error",
+    "react/jsx-pascal-case": "error",
+
+    // --- 冗長な JSX の除去 --- //
     "react/jsx-no-useless-fragment": "error",
     "react/self-closing-comp": "error",
+    "react/jsx-boolean-value": "error",
+    "react/jsx-curly-brace-presence": "error",
+    "react/jsx-fragments": "error",
+
+    // --- バグ・事故の検出 --- //
+    "react/rules-of-hooks": "error",
+    "react/display-name": "error",
+    "react/no-unknown-property": "error",
+    "react/no-unescaped-entities": "error",
+    "react/checked-requires-onchange-or-readonly": "error",
+    "react/button-has-type": "error",
+    "react/no-danger": "error",
+    "react/jsx-no-target-blank": "error",
     // Fast Refresh（react-refresh 相当）
     "react/only-export-components": ["error", { "allowConstantExport": true }],
 
+    // --- 非推奨 API --- //
+    "react/no-clone-element": "error",
+    "react/no-react-children": "error",
+
     // --- React Compiler 由来のルール --- //
-    "react/hooks": "error",
-    "react/capitalized-calls": "error",
-    "react/memo-dependencies": "error",
-    "react/exhaustive-effect-dependencies": "error",
-    "react/no-deriving-state-in-effects": "error",
+    // 本家 eslint-plugin-react-hooks が recommended としている 14 件のうち、
+    // oxlint で有効にならないのはこれだけなので明示する
+    // （config と gating は oxlint 未実装、fbt は Meta 社内向け）
+    "react/unsupported-syntax": "error",
+    // 以下は本家が preset を off にしているもの。oxlint では suspicious に
+    // 入っていて自動で有効になるため、明示的に落とす。
+    // なお同じく本家 off の exhaustive-effect-dependencies と
+    // no-deriving-state-in-effects は、他ルールと重複せず実際のバグを拾うため残す
+    //
+    // rules-of-hooks と役割が重複する。本体実装のほうが枯れている
+    "react/hooks": "off",
+    // 大文字始まりの関数呼び出しを構文だけで弾くため、コンポーネントでない
+    // ファクトリ関数まで巻き込む
+    "react/capitalized-calls": "off",
+    // useMemo / useCallback の依存配列を見るルール。no-restricted-imports で
+    // 手動メモ化そのものを禁止しているため、対象コードが存在しない
+    "react/memo-dependencies": "off",
 
     // TypeScript では type は不要なので OFF
     "jsdoc/require-property-type": "off",

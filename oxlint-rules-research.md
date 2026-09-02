@@ -1,7 +1,7 @@
 # oxlint ルール調査メモ
 
 `.oxlintrc.json` の設定にあたって実施した調査の記録。判断の前提を残し、
-次の見直し（typescript / react）でも同じ調査を繰り返さずに済むようにする。
+次の見直し（typescript）でも同じ調査を繰り返さずに済むようにする。
 見直しはプラグイン単位で進めており、節ごとに調査日と比較対象を書いている。
 
 - 対象バージョン: oxlint 1.80.0
@@ -206,6 +206,104 @@ oxlint に実装されれば採用を検討する。とくに `expiring-todo-com
 `prefer-url-href` / `prefer-url-search-parameters` / `prefer-while-loop-condition` / `require-array-sort-compare` /
 `require-css-escape` / `require-passive-events` / `require-proxy-trap-boolean-return`
 
+## react の見直し結果
+
+- 調査日: 2026-09-02
+- 比較対象: eslint-plugin-react-hooks 7.1.1（React Compiler 由来ルールの preset 判定）
+
+oxlint の react プラグインは 89 件（react_perf 4 件を含む）。うち 67 件が有効で、
+内訳は明示 21 件と categories 由来 46 件。明示 off が 4 件、未設定のまま無効が 18 件。
+unicorn と同じく、categories で自動的に有効になるものは `.oxlintrc.json` に書かない。
+
+### 関数コンポーネントの書き方
+
+`react/function-component-definition` で **関数宣言に固定**した。
+`unnamedComponents` はアロー関数と関数式の両方を許す（HOC に渡す無名コンポーネント向け。
+既定の `"function-expression"` のみだと `forwardRef(({ id }, ref) => …)` が弾かれる）。
+
+判断の根拠は実測で確かめた次の 3 点。
+
+- **ジェネリック** — 関数宣言は `function G<T>(props: Props<T>)` と素直に書ける。
+  アローは `.tsx` で山括弧が JSX と衝突するため `<T,>` とダミーのカンマが要る。
+  `FC` は型引数を束縛できず `Props<unknown>` に潰すしかなく、呼び出し側で型が失われる
+  （`<G3 items={["a"]} render={(s) => s.toUpperCase()} />` が TS18046 になることを確認）
+- **名前が残る** — 関数宣言は常に名前を持つ。`const A = () => {}` の名前は変数からの推論に
+  依存し、HOC でラップすると匿名になって `display-name` に頼ることになる
+- **巻き上げ** — 定義順に縛られない。ただしこれは条件付きで、`no-use-before-define` は
+  既定で関数宣言も検出する。将来このルールを入れるなら `{ "functions": false }` が必要
+
+アロー側の利点も実測で洗ったが、いずれも本リポジトリでは効きにくい。
+
+- `satisfies` は式にしか付けられないため関数宣言では書けない。ただし用途が限られる
+- HOC でラップするとき、宣言だと中身に別名を付けて再代入する形になり識別子が 2 つ要る。
+  ただし `memo` は `no-restricted-imports` で禁止済み、`forwardRef` は React 19 で
+  ref が通常の prop になったため不要で、HOC 自体がほぼ出てこない
+- 「関数はすべて `const`」という一貫性は好みの問題
+
+一方、次の 2 つはアロー側の主張として挙がるが、実測で否定された。
+
+- **再代入・再宣言の防止** — TypeScript は関数宣言の重複も弾く（TS2393 / TS2323）。
+  `const` でなければ防げないというのは成り立たない
+- **async コンポーネント** — React 18 までは `ReactNode` に Promise が含まれず
+  `const A: FC = async () => …` が書けなかったが、React 19 の `@types/react` は
+  `ReactNode` に `Promise<AwaitedReactNode>` を含むため、宣言・アロー・FC のいずれでも通る
+
+ヘルパー関数はこれまでどおりアロー関数でよい。`eslint/func-style` は
+`["error", "declaration", { "allowArrowFunctions": true }]` のまま据え置き、
+コンポーネントだけを `function-component-definition` で縛る形にしている。
+
+### React Compiler 由来のルール
+
+本家 eslint-plugin-react-hooks はコンパイラの診断カテゴリ 26 件それぞれに preset を
+持たせている。バンドルから抽出したところ **Recommended 14 / RecommendedLatest 1 / Off 11**
+という内訳で、oxlint のカテゴリ分けとは一致しない。
+
+以前の設定で error にしていた 5 件は、いずれも本家では off だった。
+
+| ルール                           | 判断 | 理由                                                                 |
+| -------------------------------- | ---- | -------------------------------------------------------------------- |
+| `hooks`                          | off  | `rules-of-hooks` と役割が重複。本体実装のほうが枯れている            |
+| `capitalized-calls`              | off  | 大文字始まりの関数呼び出しを構文だけで弾き、ファクトリ関数を巻き込む |
+| `memo-dependencies`              | off  | 手動メモ化を `no-restricted-imports` で禁止済みで対象コードが無い    |
+| `exhaustive-effect-dependencies` | 継続 | effect の依存漏れを拾う。他ルールと重複しない                        |
+| `no-deriving-state-in-effects`   | 継続 | 派生 state のアンチパターンを拾う。React 公式が戒めている内容        |
+
+いずれも oxlint では suspicious / perf に属して自動的に有効になるため、
+off にする 3 件は明示的に落とす必要がある。継続する 2 件は書かなくても効く。
+
+逆に本家 Recommended の 14 件のうち、oxlint で有効にならないのは
+`unsupported-syntax`（Compiler が対応しない構文）だけだったので明示的に足した。
+残る 12 件（`immutability` / `purity` / `static-components` / `set-state-in-render` /
+`set-state-in-effect` / `refs` / `globals` / `preserve-manual-memoization` /
+`error-boundaries` / `incompatible-library` / `use-memo` / `void-use-memo`）は
+oxlint の correctness に入っており設定なしで効いている。
+`config` と `gating` は oxlint 未実装、`fbt` は Meta 社内向けなので対象外。
+
+`syntax` / `todo` / `invariant` / `rule-suppression` は本家も off。ルールというより
+コンパイラの内部診断の露出で、利用者が直せる問題を指すとは限らない。
+
+### 追加したルール
+
+未設定だった 34 件のうち 16 件を採用した。既存コードに当てて誤検知が出ないことは確認済み。
+
+| 分類              | ルール                                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 書き方の統一      | `function-component-definition` / `prefer-function-component` / `hook-use-state` / `jsx-pascal-case`                                                   |
+| 冗長な JSX の除去 | `jsx-boolean-value` / `jsx-curly-brace-presence` / `jsx-fragments`                                                                                     |
+| バグ・事故の検出  | `display-name` / `no-unknown-property` / `no-unescaped-entities` / `checked-requires-onchange-or-readonly` / `button-has-type` / `jsx-no-target-blank` |
+| 非推奨 API        | `no-clone-element` / `no-react-children`                                                                                                               |
+| React Compiler    | `unsupported-syntax`                                                                                                                                   |
+
+### 見送ったルールと理由
+
+| ルール                                                                                                                                               | 理由                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `no-set-state` / `prefer-es6-class` / `state-in-constructor` / `no-redundant-should-component-update` / `require-render-return`                      | クラスコンポーネント前提。`prefer-function-component` を入れたので不要          |
+| `forbid-component-props` / `forbid-dom-props` / `forbid-elements` / `jsx-no-literals` / `jsx-props-no-spreading` / `jsx-max-depth` / `no-multi-comp` | 主張が強く、対象を列挙しないと使えないか、書き方を過度に縛る                    |
+| `jsx-handler-names`                                                                                                                                  | `onClick={handleClick}` のような命名を強制する。煩わしさに見合わない            |
+| `jsx-filename-extension`                                                                                                                             | 既定が `.jsx` のみ許可で、`.tsx` を通すにはオプション指定が要る。得るものが無い |
+| `syntax` / `todo` / `invariant` / `rule-suppression`                                                                                                 | 上記のとおり本家も off                                                          |
+
 ## default export の禁止
 
 `import/no-default-export` を error にした。default export は import 側で自由に名前を
@@ -250,6 +348,10 @@ unopinionated に入っていないが、カテゴリの指定で結果的に効
 - `consistent-function-scoping` — 内側の関数を可能な限り外のスコープへ出させる
 - `no-confusing-array-with` — `Array.prototype.with` の紛らわしい使い方を弾く
 - `require-post-message-target-origin` — `postMessage` に targetOrigin を要求する
+
+react はこの傾向がさらに強く、有効な 67 件のうち 46 件が categories 由来。
+React Compiler 由来のルールの多くが correctness に入っているためで、
+`purity` や `immutability` のように設定に一度も現れないまま効いているものがある。
 
 ## oxlint 側の未実装事項
 

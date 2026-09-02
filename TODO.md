@@ -20,7 +20,8 @@
     - [x] unicorn 見直し
     - [x] default export の禁止
     - [ ] typescript 見直し
-    - [ ] react 見直し
+    - [x] react 見直し
+    - [x] 関数コンポーネントは関数宣言に統一
     - [ ] boundaries の導入
     - [ ] project structure の導入
 - [ ] vitest の導入（oxlint-plugin の RuleTester テストと commit-trailer の単体テストの受け皿）
