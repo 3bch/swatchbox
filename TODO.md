@@ -17,8 +17,10 @@
     - [x] eslint-plugin-etc の prefer-less-than の検討(場合によっては自前実装もあり)
         - [x] JS plugin で local/prefer-less-than として自前実装（oxlint-plugin/）
         - [ ] RuleTester による単体テストの追加（vitest 導入後）
-    - [ ] unicorn 見直し
+    - [x] unicorn 見直し
+    - [x] default export の禁止
     - [ ] typescript 見直し
+    - [ ] react 見直し
     - [ ] boundaries の導入
     - [ ] project structure の導入
 - [ ] vitest の導入（oxlint-plugin の RuleTester テストと commit-trailer の単体テストの受け皿）

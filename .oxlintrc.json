@@ -97,7 +97,10 @@
     // --- 冗長な記述の除去（多くは --fix で自動修正される） --- //
     "eslint/no-else-return": "error",
     "eslint/no-lonely-if": "error",
-    "eslint/no-negated-condition": "error",
+    // 検出範囲は unicorn/no-negated-condition と完全に同一。
+    // unicorn 側が本家の置き換えとして作られており、unopinionated ベースの方針に合わせて
+    // そちらへ寄せる（oxlint ではどちらも --fix に対応する）
+    "eslint/no-negated-condition": "off",
     "eslint/arrow-body-style": "error",
     "eslint/no-useless-computed-key": "error",
     "eslint/operator-assignment": "error",
@@ -151,45 +154,137 @@
     "typescript/no-unsafe-function-type": "error",
     "typescript/no-empty-object-type": "error",
 
-    "unicorn/no-array-for-each": "error",
-    "unicorn/no-abusive-eslint-disable": "error",
-    "unicorn/prefer-negative-index": "error",
-    "unicorn/throw-new-error": "error",
-    "unicorn/prefer-modern-math-apis": "error",
-    "unicorn/prefer-number-properties": "error",
-    "unicorn/prefer-at": "error",
-    "unicorn/prefer-string-slice": "error",
-    "unicorn/new-for-builtins": "error",
-    "unicorn/no-instanceof-builtins": "error",
-    "unicorn/prefer-string-replace-all": "error",
-    "unicorn/no-array-reverse": "error",
-    "unicorn/no-array-sort": "error",
-    "unicorn/prefer-array-flat-map": "error",
-    "unicorn/prefer-set-has": "error",
-    "unicorn/prefer-spread": "error",
-    "unicorn/prefer-structured-clone": "error",
-    "unicorn/no-await-expression-member": "error",
-    "unicorn/no-single-promise-in-promise-methods": "error",
+    // --- unicorn --- //
+    // eslint-plugin-unicorn の unopinionated プリセット（v74.0.0）をベースにする。
+    // recommended は `no-null` や `filename-case` のような主張の強いルールまで含むため、
+    // 「異論の出にくいもの」だけを集めた unopinionated を採用した。
+    // 対象は unopinionated の 215 件のうち oxlint が実装している 112 件
+    // （旧名で実装されているものを含む）。
+    // うち correctness / suspicious / perf の 23 件は categories により自動で有効になるため、
+    // ここに書くのは pedantic / style / restriction / nursery のものだけとする。
+    // 選定の詳細は oxlint-rules-research.md を参照
+
+    // --- バグ・間違いやすい API の検出 --- //
     "unicorn/error-message": "error",
     "unicorn/prefer-type-error": "error",
     "unicorn/catch-error-name": "error",
-    "unicorn/prefer-node-protocol": "error",
+    "unicorn/no-useless-error-capture-stack-trace": "error",
     "unicorn/consistent-date-clone": "error",
+    "unicorn/no-array-method-this-argument": "error",
+    "unicorn/no-object-as-default-parameter": "error",
+    "unicorn/no-this-assignment": "error",
+    "unicorn/no-typeof-undefined": "error",
+    "unicorn/no-negation-in-equality-check": "error",
     "unicorn/require-number-to-fixed-digits-argument": "error",
+    "unicorn/require-array-join-separator": "error",
+    "unicorn/no-magic-array-flat-depth": "error",
+    "unicorn/no-unnecessary-array-splice-count": "error",
+    "unicorn/explicit-timer-delay": "error",
+    "unicorn/no-process-exit": "error",
+    "unicorn/text-encoding-identifier-case": "error",
+    "unicorn/relative-url-style": "error",
+    "unicorn/require-module-attributes": "error",
+
+    // --- 冗長な記述の除去（多くは --fix で自動修正される） --- //
+    // eslint/no-lonely-if は else ブロック内、unicorn/no-lonely-if は else を持たない
+    // if ブロック内を見る。検出範囲が排他的なので両方を有効にする
+    "unicorn/no-lonely-if": "error",
+    "unicorn/no-negated-condition": "error",
+    "unicorn/no-useless-undefined": "error",
+    "unicorn/no-useless-switch-case": "error",
+    "unicorn/no-useless-promise-resolve-reject": "error",
+    "unicorn/no-useless-collection-argument": "error",
+    "unicorn/no-useless-iterator-to-array": "error",
+    "unicorn/no-unnecessary-array-flat-depth": "error",
+    "unicorn/no-unnecessary-slice-end": "error",
+    "unicorn/no-zero-fractions": "error",
+    "unicorn/no-console-spaces": "error",
+    "unicorn/no-static-only-class": "error",
+    "unicorn/prefer-logical-operator-over-ternary": "error",
+    "unicorn/prefer-ternary": "error",
+    "unicorn/prefer-default-parameters": "error",
+    "unicorn/prefer-optional-catch-binding": "error",
+    "unicorn/prefer-single-call": "error",
+
+    // --- モダンな標準 API への統一 --- //
+    "unicorn/new-for-builtins": "error",
+    "unicorn/no-array-for-each": "error",
+    "unicorn/no-new-buffer": "error",
+    "unicorn/prefer-array-flat": "error",
+    "unicorn/prefer-array-some": "error",
+    "unicorn/prefer-array-index-of": "error",
+    "unicorn/prefer-at": "error",
+    "unicorn/prefer-includes": "error",
+    "unicorn/prefer-spread": "error",
+    "unicorn/prefer-string-slice": "error",
+    "unicorn/prefer-string-replace-all": "error",
+    "unicorn/prefer-string-trim-start-end": "error",
+    "unicorn/prefer-string-raw": "error",
+    "unicorn/prefer-negative-index": "error",
+    "unicorn/prefer-object-from-entries": "error",
+    "unicorn/prefer-structured-clone": "error",
+    "unicorn/prefer-regexp-test": "error",
+    "unicorn/prefer-date-now": "error",
+    "unicorn/prefer-code-point": "error",
+    "unicorn/prefer-math-min-max": "error",
+    "unicorn/prefer-math-trunc": "error",
+    "unicorn/prefer-modern-math-apis": "error",
+    "unicorn/prefer-number-properties": "error",
+    "unicorn/prefer-number-coercion": "error",
+    "unicorn/prefer-native-coercion-functions": "error",
+    "unicorn/prefer-prototype-methods": "error",
+    "unicorn/prefer-reflect-apply": "error",
+    "unicorn/prefer-bigint-literals": "error",
+    "unicorn/prefer-class-fields": "error",
+    "unicorn/throw-new-error": "error",
+    "unicorn/escape-case": "error",
+    // unopinionated の prefer-unicode-code-point-escapes に相当する（oxlint は旧名で実装）
+    "unicorn/no-hex-escape": "error",
+    "unicorn/numeric-separators-style": "error",
+
+    // --- DOM / ブラウザ API --- //
     "unicorn/prefer-query-selector": "error",
     "unicorn/prefer-dom-node-append": "error",
     "unicorn/prefer-dom-node-remove": "error",
     "unicorn/prefer-dom-node-text-content": "error",
     "unicorn/prefer-dom-node-dataset": "error",
-    "unicorn/prefer-add-event-listener": "error",
-    "unicorn/no-invalid-remove-event-listener": "error",
+    "unicorn/prefer-modern-dom-apis": "error",
+    "unicorn/prefer-classlist-toggle": "error",
     "unicorn/prefer-keyboard-event-key": "error",
     "unicorn/prefer-event-target": "error",
     "unicorn/prefer-blob-reading-methods": "error",
+    "unicorn/prefer-response-static-json": "error",
+    "unicorn/prefer-global-this": "error",
     "unicorn/no-document-cookie": "error",
+
+    // --- モジュール・非同期 --- //
+    "unicorn/prefer-module": "error",
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/import-style": "error",
+    "unicorn/prefer-top-level-await": "error",
+    "unicorn/no-await-expression-member": "error",
+
+    // --- 可読性 --- //
+    "unicorn/no-unreadable-array-destructuring": "error",
+    "unicorn/no-unreadable-iife": "error",
+    "unicorn/consistent-existence-index-check": "error",
+    "unicorn/no-abusive-eslint-disable": "error",
+
+    // unopinionated に含まれるが採用しないもの
+    // oxfmt が 16 進リテラルを小文字化する（0xFF -> 0xff）のに対し、
+    // このルールは大文字を要求するため、両者が互いの結果を打ち消し合う。
+    // 本家にある hexadecimalValue オプションは oxlint 版では未対応
+    "unicorn/number-literal-case": "off",
+    // import/no-anonymous-default-export が上位互換（関数・クラスに加えて
+    // オブジェクト・配列・インスタンス・リテラルも検出する）。
+    // unicorn 版の差分は module.exports 形式への対応のみで、ESM 専用の本リポジトリでは効かない
+    "unicorn/no-anonymous-default-export": "off",
 
     "import/consistent-type-specifier-style": ["error", "prefer-top-level-if-only-type-imports"],
     "import/no-anonymous-default-export": "error",
+    // default export は import 側で名前を変えられるため、リネーム追跡と grep 可能性を壊す。
+    // ツールの規約で default export が必須のファイルだけ overrides で除外している
+    "import/no-default-export": "error",
     "import/no-cycle": "error",
     "import/no-unassigned-import": [
       "error",
@@ -290,6 +385,15 @@
     "builtin": true,
     "browser": true
   },
+
+  // ツールの規約で default export が必須のファイルだけ import/no-default-export を外す。
+  // overrides.files も ignorePatterns と同じく、パスを含むパターンは先頭に **/ が必要
+  "overrides": [
+    {
+      "files": ["*.config.ts", "*.config.js", "**/oxlint-plugin/index.ts"],
+      "rules": { "import/no-default-export": "off" }
+    }
+  ],
 
   // shadcn/ui の生成物と TanStack Router の生成ファイルは対象外とする。
   // ignorePatterns は先頭に **/ を付けないとマッチしない点に注意

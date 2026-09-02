@@ -65,7 +65,7 @@
 // 参照: https://git-scm.com/docs/githooks#_prepare_commit_msg
 import { existsSync, globSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import path from "node:path";
 import process from "node:process";
 
 import { xSync } from "tinyexec";
@@ -212,13 +212,16 @@ const contentText = (content: string | Array<z.infer<typeof Block>>): string =>
 
 /** セッションの JSONL（サブエージェント分を含む）のパスを返す */
 const sessionFiles = (sessionId: string): string[] => {
-  const projects = join(process.env["CLAUDE_CONFIG_DIR"] ?? join(homedir(), ".claude"), "projects");
+  const projects = path.join(
+    process.env["CLAUDE_CONFIG_DIR"] ?? path.join(homedir(), ".claude"),
+    "projects",
+  );
   if (!existsSync(projects)) {
     return [];
   }
   return globSync([`*/${sessionId}.jsonl`, `*/${sessionId}/subagents/*.jsonl`], {
     cwd: projects,
-  }).map((file) => join(projects, file));
+  }).map((file) => path.join(projects, file));
 };
 
 // 読み取りに失敗しても undefined を返すだけにする。ここで例外を投げると
@@ -263,8 +266,10 @@ const countActivity = (files: string[]): Activity | undefined => {
 
       // スキルの読み込みは Skill ツール経由でもスラッシュ起動でもこの 1 行が残る。
       if (line.type === "user" && line.isMeta === true && content !== undefined) {
-        const path = /^Base directory for this skill: (\S+)/.exec(contentText(content).trim())?.[1];
-        const name = path?.split("/").at(-1);
+        const baseDirectory = /^Base directory for this skill: (\S+)/.exec(
+          contentText(content).trim(),
+        )?.[1];
+        const name = baseDirectory?.split("/").at(-1);
         if (name !== undefined && name !== "") {
           increment(skills, name);
         }

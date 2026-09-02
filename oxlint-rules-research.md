@@ -1,11 +1,10 @@
 # oxlint ルール調査メモ
 
 `.oxlintrc.json` の設定にあたって実施した調査の記録。判断の前提を残し、
-次の見直し（unicorn / typescript）でも同じ調査を繰り返さずに済むようにする。
+次の見直し（typescript / react）でも同じ調査を繰り返さずに済むようにする。
+見直しはプラグイン単位で進めており、節ごとに調査日と比較対象を書いている。
 
-- 調査日: 2026-08-28
 - 対象バージョン: oxlint 1.80.0
-- 比較対象: oxlint 1.13.0（1 年前の 2025-08-26 時点で最新だったバージョン）
 
 ## 調査方法
 
@@ -51,6 +50,9 @@ oxlint --print-config -c <空の設定> -D all -D nursery \
 
 ## eslint / oxc の見直し結果
 
+- 調査日: 2026-08-28
+- 比較対象: oxlint 1.13.0（1 年前の 2025-08-26 時点で最新だったバージョン）
+
 AI エージェントがコードを書く前提で、次の 3 点を基準に選定した。
 
 1. エージェントが自力で気づけないバグを弾く
@@ -90,6 +92,147 @@ AI エージェントがコードを書く前提で、次の 3 点を基準に�
 - `new-cap` は組み込み関数を例外扱いするため `Number("1")` などは発火しない
 - `--fix` でインデントが崩れることがあるが、pre-commit では `fix:format` が先に走るため問題にならない
 
+## unicorn の見直し結果
+
+- 調査日: 2026-09-02
+- 比較対象: eslint-plugin-unicorn 74.0.0
+
+### 方針
+
+`recommended` ではなく `unopinionated` プリセットをベースにした。`recommended` は
+`no-null` / `filename-case` / `no-array-reduce` のように好みの分かれるルールまで含むが、
+`unopinionated` は「異論の出にくいもの」だけを集めたサブセットになっている。
+本家の定義は `meta.docs.recommended === "unopinionated"` で、readme のルール表では
+☑️ が付く。
+
+### 突き合わせ
+
+| 区分                                                             | 件数 |
+| ---------------------------------------------------------------- | ---- |
+| unopinionated                                                    | 215  |
+| oxlint 1.80.0 が実装する unicorn ルール                          | 138  |
+| 共通集合（旧名での実装を含む）                                   | 112  |
+| └ categories により自動で有効（correctness / suspicious / perf） | 23   |
+| └ error にした（pedantic 以下）                                  | 87   |
+| └ 意図的に off にした                                            | 2    |
+
+`.oxlintrc.json` の unicorn セクションには、categories では有効にならないものだけを書く。
+自動で有効になるものまで並べても、`categories` を変えない限り意味を持たない冗長な記述になる。
+
+明示している 91 件の内訳は、上記 87 件に unopinionated 外から残した 4 件
+（`catch-error-name` / `no-await-expression-member` / `prefer-query-selector` / `prefer-spread`）を
+加えたもの。いずれも前回の見直しで「書き方の揺れ防止」の観点から選んだもので、
+`recommended` には含まれる。
+
+### 名前が変わったルール
+
+unicorn は v74 までにいくつかのルールを改名しており、oxlint は旧名のまま実装している。
+readme を名前だけで引くと「未実装」に見えるので注意する。
+
+| unopinionated での名前              | oxlint での名前                 |
+| ----------------------------------- | ------------------------------- |
+| `no-for-each`                       | `no-array-for-each`             |
+| `dom-node-dataset`                  | `prefer-dom-node-dataset`       |
+| `prefer-unicode-code-point-escapes` | `no-hex-escape`                 |
+| `no-instanceof-builtins`            | `no-instanceof-array` も残る    |
+| `no-unnecessary-slice-end`          | `no-length-as-slice-end` も残る |
+
+### 他プラグインと重複するルールの判定
+
+いずれも実際に oxlint へ通して検出範囲を確かめた。名前が同じでも中身は違う。
+
+- `no-lonely-if` — **eslint 版と unicorn 版を両方使う**。eslint 版は `else { if … }`、
+  unicorn 版は `else` を持たない入れ子の `if (foo) { if (bar) … }` を見る。
+  同じコードで検出行が一切重ならなかった。本家 unicorn も併用を推奨している
+- `no-negated-condition` — **unicorn 版に寄せ、eslint 版を off**。検出位置が完全に一致し、
+  `--fix` の結果も同一だった。本家では unicorn 版が eslint 版の置き換えとして作られており
+  （ESLint 本体は fixable にすることを拒否した）、unopinionated ベースの方針に合わせる。
+  なお oxlint は eslint 版にも独自に fixer を付けているため、現時点で機能差はない
+- `no-anonymous-default-export` — **import 版だけを使う**。import 版は無名の関数・クラスに加えて
+  オブジェクト・配列・`new Foo()`・リテラルも検出する上位互換だった。unicorn 版の差分は
+  `module.exports = function () {}` への対応のみで、ESM 専用の本リポジトリでは効かない
+- `require-array-sort-compare` — 既に `typescript/require-array-sort-compare` を有効にしている。
+  型情報を使うぶん typescript 版のほうが精度が高いため、unicorn 版は入れない
+
+### oxfmt と衝突するルール
+
+- `number-literal-case` — **off**。oxfmt は 16 進リテラルを小文字化する（`0xFF` → `0xff`）が、
+  このルールは大文字を要求するため、`fix:format` と `fix:lint` が互いの結果を打ち消し合う。
+  本家にある `hexadecimalValue: "lowercase"` オプションは oxlint 版が未対応
+- `escape-case` / `no-hex-escape` — **採用**。oxfmt は文字列リテラル内のエスケープ列に
+  手を加えないため衝突しない。実際に `\u{1f600}` や `\xa9` を整形しても変化しなかった
+- `numeric-separators-style` — **採用**。既定では区切りを含まない数値リテラルを対象にしないため、
+  `1000000` は指摘されない
+
+### `import-style` と `node:path`
+
+`unicorn/import-style` は `node:path` に default import を要求する（`join` や `resolve` は
+名前が汎用的で衝突しやすいため）。`scripts/commit-trailer.ts` が named import を使っていたので、
+ルール側をオプションで曲げるのではなく本家の既定に合わせてコードを直した。
+
+その結果、スキルのベースディレクトリを受けるローカル変数 `path` が
+モジュールの `path` をシャドウして `no-shadow` に引っかかり、`baseDirectory` に改名した。
+「`path` という名前は衝突しやすい」というルールの主張がそのまま再現された形になる。
+
+### oxlint が未実装の unopinionated ルール（103 件）
+
+oxlint に実装されれば採用を検討する。とくに `expiring-todo-comments` は
+後述のとおり `no-warning-comments` の代わりとして待っているもの。
+
+`better-dom-traversing` / `consistent-compound-words` / `consistent-export-decorator-position` / `consistent-optional-chaining` /
+`expiring-todo-comments` / `no-accidental-bitwise-operator` / `no-array-from-fill` / `no-array-sort-for-min-max` /
+`no-async-promise-finally` / `no-blob-to-file` / `no-boolean-sort-comparator` / `no-canvas-to-image` /
+`no-chained-comparison` / `no-collection-bracket-access` / `no-constant-zero-expression` / `no-declarations-before-early-exit` /
+`no-double-comparison` / `no-duplicate-logical-operands` / `no-error-property-assignment` / `no-exports-in-scripts` /
+`no-global-object-property-assignment` / `no-impossible-length-comparison` / `no-invalid-argument-count` / `no-invalid-character-comparison` /
+`no-invalid-well-known-symbol-methods` / `no-misrefactored-assignment` / `no-multiple-promise-resolver-calls` / `no-named-default` /
+`no-negated-array-predicate` / `no-negated-comparison` / `no-nonstandard-builtin-properties` / `no-redundant-comparison` /
+`no-shorthand-property-overrides` / `no-subtraction-comparison` / `no-top-level-side-effects` / `no-transition-all` /
+`no-unnecessary-fetch-options` / `no-unnecessary-global-this` / `no-unnecessary-nested-ternary` / `no-unnecessary-polyfills` /
+`no-unnecessary-string-trim` / `no-unreadable-object-destructuring` / `no-unsafe-buffer-conversion` / `no-unsafe-promise-all-settled-values` /
+`no-unsafe-sqlite-interpolation` / `no-unused-array-method-return` / `no-useless-boolean-cast` / `no-useless-coercion` /
+`no-useless-compound-assignment` / `no-useless-concat` / `no-useless-continue` / `no-useless-delete-check` /
+`no-useless-logical-operand` / `no-useless-override` / `no-useless-re-export` / `no-useless-template-literals` /
+`no-xor-as-exponentiation` / `prefer-add-event-listener-options` / `prefer-aggregate-error` / `prefer-array-from-map` /
+`prefer-array-from-range` / `prefer-array-last-methods` / `prefer-await` / `prefer-block-statement-over-iife` /
+`prefer-boolean-return` / `prefer-direct-iteration` / `prefer-dom-node-replace-children` / `prefer-early-return` /
+`prefer-flat-math-min-max` / `prefer-global-number-constants` / `prefer-has-check` / `prefer-identifier-import-export-specifiers` /
+`prefer-iterable-in-constructor` / `prefer-iterator-helpers` / `prefer-iterator-to-array-at-end` / `prefer-map-from-entries` /
+`prefer-math-abs` / `prefer-math-constants` / `prefer-minimal-ternary` / `prefer-object-define-properties` /
+`prefer-object-iterable-methods` / `prefer-path2d` / `prefer-promise-with-resolvers` / `prefer-queue-microtask` /
+`prefer-simple-sort-comparator` / `prefer-simplified-conditions` / `prefer-single-array-predicate` / `prefer-single-replace` /
+`prefer-split-limit` / `prefer-string-match-all` / `prefer-string-pad-start-end` / `prefer-string-repeat` /
+`prefer-switch` / `prefer-toggle-attribute` / `prefer-unary-minus` / `prefer-url-can-parse` /
+`prefer-url-href` / `prefer-url-search-parameters` / `prefer-while-loop-condition` / `require-array-sort-compare` /
+`require-css-escape` / `require-passive-events` / `require-proxy-trap-boolean-return`
+
+## default export の禁止
+
+`import/no-default-export` を error にした。default export は import 側で自由に名前を
+付け替えられるため、リネームの追跡と grep 可能性を壊す。named export なら
+エディタの自動 import と一括リネームがそのまま効く。
+
+導入時点で `src/` 配下に default export は 1 つも無く、修正は発生しなかった。
+TanStack Router のファイルベースルーティングは `createFileRoute()` の結果を
+`Route` という named export で返す設計なので、`src/routes/` でも default export は要らない。
+
+例外はツールの規約で default export が必須になる 3 ファイルだけで、`overrides` で外している。
+
+- `vite.config.ts` — Vite の設定ファイル規約
+- `eslint.config.js` — ESLint の flat config 規約
+- `oxlint-plugin/index.ts` — oxlint の `jsPlugins` 規約
+
+`overrides.files` は `ignorePatterns` と同じ癖があり、**パスを含むパターンは先頭に `**/` が必要**。
+`"oxlint-plugin/index.ts"` ではマッチせず `"**/oxlint-plugin/index.ts"` と書く必要がある。
+`*.config.ts` のようなファイル名だけのパターンはそのまま効く。
+
+`unicorn/no-anonymous-default-export` ではなく `import/no-anonymous-default-export` を
+併用している。禁止の対象外にしたファイルの中では引き続き効くため。
+`vite.config.ts` の `export default defineConfig({…})` は CallExpression なので既定で許容される。
+
+将来 `React.lazy()` を使う場合は default export を持つモジュールが必要になるので、
+`lazy(() => import("#/…").then((m) => ({ default: m.Home })))` と書くことになる。
+
 ## 設定に書いていないが有効になっているルール
 
 `categories` で `correctness` / `suspicious` / `perf` を error にしているため、
@@ -100,6 +243,13 @@ AI エージェントがコードを書く前提で、次の 3 点を基準に�
   未使用引数を `_unused` とする慣習は問題ない
 - `no-shadow` — 外側スコープと同名の変数を禁止する。`map((value) => ...)` のような
   素直な命名が弾かれるため、煩わしければ個別に off にする
+
+unicorn も同様で、有効な 119 件のうち 28 件は categories 由来。そのうち次の 3 件は
+unopinionated に入っていないが、カテゴリの指定で結果的に効いている。
+
+- `consistent-function-scoping` — 内側の関数を可能な限り外のスコープへ出させる
+- `no-confusing-array-with` — `Array.prototype.with` の紛らわしい使い方を弾く
+- `require-post-message-target-origin` — `postMessage` に targetOrigin を要求する
 
 ## oxlint 側の未実装事項
 
@@ -144,21 +294,6 @@ AI エージェントがコードを書く前提で、次の 3 点を基準に�
 
 `categories` の設定上、correctness / suspicious / perf は自動的に有効になるため、
 検討が必要なのは pedantic / style / restriction / nursery の未設定ルールに限られる。
-
-### unicorn（この 1 年の新規 34 件）
-
-| カテゴリ    | 状態   | ルール                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| suspicious  | 設定済 | `no-array-fill-with-reference-type` / `no-array-reverse` / `no-array-sort` / `no-confusing-array-with` / `require-module-specifiers`                                                                                                                                                                                                                                                                                         |
-| pedantic    | 設定済 | `prefer-at`                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| pedantic    | 未設定 | `no-array-callback-reference` / `no-immediate-mutation` / `no-negated-condition` / `no-unnecessary-array-splice-count` / `prefer-import-meta-properties` / `prefer-number-coercion` / `prefer-single-call` / `prefer-top-level-await`                                                                                                                                                                                        |
-| style       | 設定済 | `prefer-keyboard-event-key`                                                                                                                                                                                                                                                                                                                                                                                                  |
-| style       | 未設定 | `consistent-template-literal-escape` / `custom-error-definition` / `explicit-timer-delay` / `max-nested-calls` / `no-useless-collection-argument` / `prefer-bigint-literals` / `prefer-class-fields` / `prefer-classlist-toggle` / `prefer-default-parameters` / `prefer-export-from` / `prefer-response-static-json` / `prefer-ternary` / `relative-url-style` / `require-module-attributes` / `switch-case-break-position` |
-| restriction | 未設定 | `import-style` / `no-useless-error-capture-stack-trace` / `prefer-module`                                                                                                                                                                                                                                                                                                                                                    |
-| nursery     | 未設定 | `no-useless-iterator-to-array`                                                                                                                                                                                                                                                                                                                                                                                               |
-
-`unicorn/no-negated-condition` は今回追加した `eslint/no-negated-condition` と
-重複するため、採用しない。
 
 ### typescript（この 1 年の新規 27 件）
 
