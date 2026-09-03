@@ -135,24 +135,101 @@
     // 分岐の先頭・末尾で重複しているコードを検出する
     "oxc/branches-sharing-code": "error",
 
-    "typescript/array-type": ["error", { "default": "array-simple" }],
-    "typescript/consistent-type-definitions": "error",
-    "typescript/consistent-type-imports": "error",
-    "typescript/consistent-indexed-object-style": "error",
-    "typescript/prefer-function-type": "error",
-    "typescript/prefer-for-of": "error",
-    "typescript/no-non-null-asserted-nullish-coalescing": "error",
-    "typescript/adjacent-overload-signatures": "error",
-    "typescript/no-non-null-assertion": "error",
+    // --- typescript --- //
+    // typescript-eslint 8.69.0 の strict-type-checked をベースに、
+    // stylistic-type-checked から書き方を固定するものを足した構成にする。
+    // categories で自動的に有効になるもの（correctness / suspicious / perf）は
+    // unicorn / react と同様ここに書かない。型情報を使うルールも categories で
+    // 有効になるため、前提は options.typeAware: true だけになる。
+    // 選定の詳細は oxlint-rules-research.md を参照
+
+    // --- 型安全性の穴を塞ぐ --- //
     "typescript/no-explicit-any": "error",
-    "typescript/no-inferrable-types": "error",
-    "typescript/no-invalid-void-type": "error",
-    "typescript/no-require-imports": "error",
-    "typescript/prefer-optional-chain": "error",
-    "typescript/method-signature-style": "error",
-    "typescript/no-import-type-side-effects": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-return": "error",
     "typescript/no-unsafe-function-type": "error",
     "typescript/no-empty-object-type": "error",
+    "typescript/no-invalid-void-type": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-non-null-asserted-nullish-coalescing": "error",
+    // delete する動的キーは Map / Set で持つ
+    "typescript/no-dynamic-delete": "error",
+    // @ts-ignore を禁じ、@ts-expect-error と理由の記述を要求する。
+    // 前者は対象行のエラーが消えても黙って残り続ける
+    "typescript/ban-ts-comment": "error",
+    // .catch(err => …) の err を unknown として扱わせる
+    "typescript/use-unknown-in-catch-callback-variable": "error",
+
+    // --- Promise・非同期の取り扱い --- //
+    "typescript/no-misused-promises": "error",
+    "typescript/require-await": "error",
+    "typescript/return-await": "error",
+    "typescript/only-throw-error": "error",
+    "typescript/prefer-promise-reject-errors": "error",
+
+    // --- 型が示す前提の検証 --- //
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-confusing-void-expression": "error",
+    "typescript/no-deprecated": "error",
+    "typescript/restrict-plus-operands": "error",
+    // getter の型が setter に代入できない組み合わせを検出する
+    "typescript/related-getter-setter-pairs": "error",
+
+    // --- 書き方の統一 --- //
+    "typescript/array-type": ["error", { "default": "array-simple" }],
+    "typescript/consistent-type-definitions": "error",
+    "typescript/consistent-indexed-object-style": "error",
+    // 型引数はコンストラクタ側に寄せる（new Map<K, V>() の形）
+    "typescript/consistent-generic-constructors": "error",
+    // 型アサーションは as に統一する（<T>x は .tsx で書けない）
+    "typescript/consistent-type-assertions": "error",
+    // リテラルを返すだけの getter は readonly フィールドにする
+    "typescript/class-literal-property-style": "error",
+    "typescript/prefer-function-type": "error",
+    "typescript/no-inferrable-types": "error",
+    "typescript/no-require-imports": "error",
+    "typescript/adjacent-overload-signatures": "error",
+    // ユニオンひとつにまとめられるオーバーロードを検出する
+    "typescript/unified-signatures": "error",
+
+    // --- モダンな API・冗長さの除去 --- //
+    "typescript/prefer-for-of": "error",
+    "typescript/prefer-optional-chain": "error",
+    "typescript/prefer-nullish-coalescing": "error",
+    "typescript/prefer-includes": "error",
+    // .filter(…)[0] を .find(…) にする
+    "typescript/prefer-find": "error",
+    "typescript/prefer-string-starts-ends-with": "error",
+    // 捕捉した文字列を使わない場面では String#match より RegExp#exec が速い
+    "typescript/prefer-regexp-exec": "error",
+    // reduce の初期値の as を型引数に移す
+    "typescript/prefer-reduce-type-parameter": "error",
+    "typescript/prefer-return-this-type": "error",
+    "typescript/dot-notation": "error",
+
+    // --- プリセット外から採用しているもの --- //
+    // verbatimModuleSyntax と組で、型の import / export を type 付きに固定する
+    "typescript/consistent-type-imports": "error",
+    "typescript/consistent-type-exports": "error",
+    "typescript/no-import-type-side-effects": "error",
+    // インタフェースのメソッドはプロパティ形式に統一する。
+    // メソッド形式は引数の型が bivariant になり、型検査が緩くなる
+    "typescript/method-signature-style": "error",
+    // 条件式には boolean だけを許す。空文字や 0 の暗黙の falsy を潰す
+    "typescript/strict-boolean-expressions": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+
+    // --- 採用しないもの --- //
+    // stylistic-type-checked に含まれるが、no-non-null-assertion と正面から衝突する。
+    // `x as string` に「! を使え」と言う一方で `x!` は no-non-null-assertion が禁じるため、
+    // どちらの書き方も残せなくなる。非 null の絞り込みは型ガードで書く方針を取る
+    "typescript/non-nullable-type-assertion-style": "off",
+    // strict-type-checked に含まれるが、tsconfig の erasableSyntaxOnly が
+    // enum と namespace の構文自体を禁じているため対象コードが生まれない
+    // （no-mixed-enums / prefer-literal-enum-member / no-namespace）
 
     // --- unicorn --- //
     // eslint-plugin-unicorn の unopinionated プリセット（v74.0.0）をベースにする。
@@ -214,7 +291,6 @@
     "unicorn/prefer-array-some": "error",
     "unicorn/prefer-array-index-of": "error",
     "unicorn/prefer-at": "error",
-    "unicorn/prefer-includes": "error",
     "unicorn/prefer-spread": "error",
     "unicorn/prefer-string-slice": "error",
     "unicorn/prefer-string-replace-all": "error",
@@ -279,6 +355,9 @@
     // オブジェクト・配列・インスタンス・リテラルも検出する）。
     // unicorn 版の差分は module.exports 形式への対応のみで、ESM 専用の本リポジトリでは効かない
     "unicorn/no-anonymous-default-export": "off",
+    // typescript/prefer-includes が上位互換。型情報を使うため indexOf() !== -1 に加えて
+    // /foo/.test(s) のような正規表現による存在判定も String#includes() に寄せられる
+    "unicorn/prefer-includes": "off",
 
     "import/consistent-type-specifier-style": ["error", "prefer-top-level-if-only-type-imports"],
     "import/no-anonymous-default-export": "error",
@@ -381,40 +460,7 @@
     "vitest/prefer-called-times": "error",
     "vitest/prefer-to-be-falsy": "error",
     "vitest/prefer-to-be-truthy": "error",
-    "vitest/prefer-to-be-object": "error",
-
-    // --- type aware Rules（options.typeAware: true が前提） --- //
-    "typescript/no-floating-promises": "error",
-    "typescript/await-thenable": "error",
-    "typescript/no-misused-promises": "error",
-    "typescript/only-throw-error": "error",
-    "typescript/prefer-promise-reject-errors": "error",
-    "typescript/return-await": "error",
-    "typescript/require-await": "error",
-    "typescript/no-base-to-string": "error",
-    "typescript/restrict-plus-operands": "error",
-    "typescript/restrict-template-expressions": "error",
-    "typescript/require-array-sort-compare": "error",
-    "typescript/no-array-delete": "error",
-    "typescript/no-misused-spread": "error",
-    "typescript/no-meaningless-void-operator": "error",
-    "typescript/no-duplicate-type-constituents": "error",
-    "typescript/no-unnecessary-type-assertion": "error",
-    "typescript/no-unnecessary-boolean-literal-compare": "error",
-    "typescript/no-unnecessary-condition": "error",
-    "typescript/no-confusing-void-expression": "error",
-    "typescript/consistent-type-exports": "error",
-    "typescript/switch-exhaustiveness-check": "error",
-    "typescript/unbound-method": "error",
-    "typescript/prefer-nullish-coalescing": "error",
-    "typescript/strict-boolean-expressions": "error",
-    "typescript/no-deprecated": "error",
-    "typescript/no-unsafe-argument": "error",
-    "typescript/no-unsafe-assignment": "error",
-    "typescript/no-unsafe-call": "error",
-    "typescript/no-unsafe-member-access": "error",
-    "typescript/no-unsafe-return": "error",
-    "typescript/no-unsafe-type-assertion": "error"
+    "vitest/prefer-to-be-object": "error"
   },
 
   "settings": {

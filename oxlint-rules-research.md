@@ -1,7 +1,7 @@
 # oxlint ルール調査メモ
 
 `.oxlintrc.json` の設定にあたって実施した調査の記録。判断の前提を残し、
-次の見直し（typescript）でも同じ調査を繰り返さずに済むようにする。
+次の見直し（boundaries / project structure）でも同じ調査を繰り返さずに済むようにする。
 見直しはプラグイン単位で進めており、節ごとに調査日と比較対象を書いている。
 
 - 対象バージョン: oxlint 1.80.0
@@ -27,6 +27,23 @@ oxlint --print-config -c <空の設定> -D all -D nursery \
 
 カテゴリ（correctness / pedantic など）の判定は、`-A all -A nursery -D <category>`
 で 1 カテゴリずつ有効にして出力を集めることで得られる。
+
+プリセットを基準に選定する場合は、readme のルール表ではなく設定オブジェクトの実体を見る。
+非推奨化されたルールや別名で実装されているルールがあり、表と実体がずれるため。
+
+```sh
+# typescript-eslint の場合。configs.strictTypeChecked は flat config の配列なので、
+# 各要素の rules をマージしてから "off" のものを落とす
+npm install typescript-eslint
+node --input-type=module -e '
+  import tseslint from "typescript-eslint";
+  const rules = Object.assign({}, ...tseslint.configs.strictTypeChecked.map((c) => c.rules ?? {}));
+  console.log(Object.entries(rules).filter(([, v]) => v !== "off").map(([k]) => k));
+'
+```
+
+なお `configs.all` には非推奨のルールが含まれないため、あるルールが現行かどうかは
+`all` に入っているかで判定できる。
 
 ## 1 年間の増加サマリ
 
@@ -304,6 +321,201 @@ oxlint の correctness に入っており設定なしで効いている。
 | `jsx-filename-extension`                                                                                                                             | 既定が `.jsx` のみ許可で、`.tsx` を通すにはオプション指定が要る。得るものが無い |
 | `syntax` / `todo` / `invariant` / `rule-suppression`                                                                                                 | 上記のとおり本家も off                                                          |
 
+## typescript の見直し結果
+
+- 調査日: 2026-09-03
+- 比較対象: typescript-eslint 8.69.0
+
+### 方針
+
+`strict-type-checked` をベースに、`stylistic-type-checked` から書き方を固定するものを
+足した構成にした。unicorn で `unopinionated` を選んだのと同じ考え方で、プリセットの
+線引きをそのまま借り、ルール単位の好みを持ち込まないようにする。
+
+`strict-type-checked` は `recommended-type-checked` を包含し、型情報を使って
+「型としては通るが意図と食い違う」コードを弾く。`stylistic-type-checked` のほうは
+バグを見つけるルールではなく同じ意味の書き方を 1 つに固定するもので、
+「会話が変われば書き方が揺れる」というこのリポジトリの前提と目的が一致する。
+
+型情報を使うルールも oxlint では `categories` で有効になるため、前提条件は
+`options.typeAware: true` だけで済む。設定ファイルを「type aware かどうか」で
+分けておく意味がなくなったので、役割ごとの分類に組み直した。
+
+### 突き合わせ
+
+| 区分                            | strict-type-checked | stylistic-type-checked |
+| ------------------------------- | ------------------- | ---------------------- |
+| プリセットのルール数            | 68                  | 21                     |
+| oxlint 1.80.0 が実装            | 64                  | 20                     |
+| └ categories により自動で有効   | 33                  | 1                      |
+| └ error にした（pedantic 以下） | 28                  | 17                     |
+| └ 採用しなかった                | 3                   | 2                      |
+| oxlint 未実装                   | 4                   | 1                      |
+
+これに加えてプリセット外から 6 件を明示的に error にしており、5 件が categories 由来で
+効いている。oxlint の typescript ルール 110 件のうち、有効なのは 90 件になった。
+
+`.oxlintrc.json` に書くのは categories で有効にならないもの（pedantic / style /
+restriction / nursery）だけ、という unicorn / react と同じ方針を typescript にも広げた。
+これに伴い、これまで明示していた `await-thenable` / `no-floating-promises` /
+`unbound-method` など correctness / suspicious の 13 件は設定から落とした。有効な状態は
+変わらない（`--print-config` の差分で確認済み）。
+
+### 追加したルール（15 件）
+
+| 分類                       | ルール                                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 型安全性の穴を塞ぐ         | `ban-ts-comment` / `no-dynamic-delete` / `use-unknown-in-catch-callback-variable`                                                                                         |
+| 型が示す前提の検証         | `related-getter-setter-pairs`                                                                                                                                             |
+| 書き方の統一               | `consistent-generic-constructors` / `consistent-type-assertions` / `class-literal-property-style` / `unified-signatures`                                                  |
+| モダンな API・冗長さの除去 | `prefer-includes` / `prefer-find` / `prefer-string-starts-ends-with` / `prefer-regexp-exec` / `prefer-reduce-type-parameter` / `prefer-return-this-type` / `dot-notation` |
+
+いずれも既存コードに違反は出なかった。
+
+`ban-ts-comment` は `@ts-ignore` を禁じて `@ts-expect-error` と 3 文字以上の理由を要求する。
+前者は対象行のエラーが消えても黙って残り続けるため、型エラーの抑止が古びていることに
+気づけなくなる。deprecated になった `prefer-ts-expect-error` の役割もこのルールが引き取っている。
+
+### oxlint 未実装の 5 件は eslint 本体のルールで埋まっている
+
+typescript-eslint には「ESLint 本体のルールを型情報付きで置き換える」拡張ルールがあり、
+oxlint はこの 5 件を typescript プラグインとして実装していない。ただし本体側のルールは
+すべて oxlint にあり、categories か設定で有効になっている。
+
+| プリセットのルール                          | oxlint での代替                 | 有効になる経路              |
+| ------------------------------------------- | ------------------------------- | --------------------------- |
+| `@typescript-eslint/no-unused-vars`         | `eslint/no-unused-vars`         | correctness                 |
+| `@typescript-eslint/no-unused-expressions`  | `eslint/no-unused-expressions`  | correctness                 |
+| `@typescript-eslint/no-useless-constructor` | `eslint/no-useless-constructor` | suspicious                  |
+| `@typescript-eslint/no-array-constructor`   | `eslint/no-array-constructor`   | pedantic（設定で error）    |
+| `@typescript-eslint/no-empty-function`      | `eslint/no-empty-function`      | restriction（設定で error） |
+
+型情報を使わないぶん検出の精度は落ちるが、プリセットに対する穴は空いていない。
+なお `no-unused-vars` は tsconfig の `noUnusedLocals` / `noUnusedParameters` とも重なる。
+
+### プリセットに含まれるが採用しなかったルール
+
+| ルール                                                           | 理由                                                                                                                                                   |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `non-nullable-type-assertion-style`                              | `no-non-null-assertion` と正面から衝突する（後述）                                                                                                     |
+| `no-mixed-enums` / `prefer-literal-enum-member` / `no-namespace` | tsconfig の `erasableSyntaxOnly` が `enum` と `namespace` の構文自体を禁じており（TS1294）、対象コードが生まれない。実際に書いて弾かれることを確認した |
+| `ban-tslint-comment`                                             | TSLint は 2019 年に非推奨化されており、`/* tslint:disable */` が新しく書かれることはない                                                               |
+
+### プリセット外で採用しなかったルール
+
+oxlint が実装する typescript ルールのうち、プリセットにも入らず今回も見送ったもの。
+
+| ルール                                                                            | 理由                                                                                                                                                                   |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ban-types` / `no-empty-interface` / `no-var-requires` / `prefer-ts-expect-error` | typescript-eslint v8 で削除済み。役割は `no-restricted-types` / `no-empty-object-type` / `no-require-imports` / `ban-ts-comment` が引き継いでおり、後ろ 3 つは採用済み |
+| `explicit-function-return-type` / `explicit-module-boundary-types`                | 戻り値の型推論を捨てることになる。型注釈は表現したい制約がある場所にだけ書きたい                                                                                       |
+| `explicit-member-accessibility` / `parameter-properties` / `prefer-readonly`      | class 前提のルール。React コンポーネントは関数で書く方針なので対象がほぼ無い                                                                                           |
+| `prefer-readonly-parameter-types`                                                 | すべての引数に `readonly` を要求する。得られる保証に対して型の記述量が見合わない                                                                                       |
+| `no-restricted-types`                                                             | 禁止したい型を自分で列挙しない限り何もしない。禁止したい型が出てきたら設定する                                                                                         |
+| `promise-function-async`                                                          | Promise を返す関数に `async` を強制する。`async` を付けない委譲（`return fetch(…)`）を書けなくする                                                                     |
+| `no-unnecessary-qualifier` / `prefer-enum-initializers`                           | `enum` / `namespace` 前提。上と同じ理由で対象コードが無い                                                                                                              |
+| `strict-void-return`                                                              | `no-misused-promises` とほぼ重複する（後述）                                                                                                                           |
+
+### 重複・衝突するルールの判定
+
+いずれも実際に oxlint へ通して検出位置を確かめた。
+
+- `non-nullable-type-assertion-style` × `no-non-null-assertion` — **前者を採用しない**。
+  `maybe as string` に対して前者が「`!` を使え」と言い、`maybe!` に対して後者が「`!` を使うな」と言う。
+  同じ probe で 8 行目と 9 行目に交互にエラーが出て、どちらの書き方も残せなくなった。
+  `no-non-null-assertion` と `no-unsafe-type-assertion` を優先し、非 null の絞り込みは
+  型ガードで書く方針を取る
+- `typescript/prefer-includes` × `unicorn/prefer-includes` — **typescript 版に寄せ、unicorn 版を off**。
+  `arr.indexOf("x") !== -1` は両方が検出したが、`/foo/.test(s)` を `String#includes()` に
+  寄せられるのは型情報を持つ typescript 版だけだった。上位互換なので併用する意味がない
+- `strict-void-return` × `no-misused-promises` — **`strict-void-return` を採用しない**。
+  Promise を返す関数を void 期待の位置に渡すケース（`cb(async () => …)`、JSX の
+  `onClick={async () => …}`、`forEach(async …)`）で検出行が完全に一致した。
+  差が出たのは `cb(() => num())` のような Promise 以外の非 void 戻り値だけで、
+  そのために同じ箇所へ 2 つのエラーを出す構成にはしない。
+  typescript-eslint 側でもまだどのプリセットにも入っていないため、収録されたら再検討する
+- `typescript/dot-notation` × tsconfig の `noPropertyAccessFromIndexSignature` — **衝突しない**。
+  index signature 経由の `rec["key"]` は指摘せず、宣言済みプロパティの `obj["known"]` だけを
+  指摘した。既定のオプションのままで両立する
+- `typescript/require-array-sort-compare` — categories（correctness）で有効になっている。
+  unicorn の同名ルールを入れていないのは unicorn の節に書いたとおり
+
+### プリセット外から残しているルール（6 件）
+
+- `consistent-type-imports` / `consistent-type-exports` / `no-import-type-side-effects` —
+  tsconfig の `verbatimModuleSyntax` と組で、型の import / export を `type` 付きに固定する。
+  トランスパイル時に消える import が構文から一目で分かる状態を保つ
+- `method-signature-style` — インタフェースのメソッドをプロパティ形式に統一する。
+  メソッド形式は引数の型が bivariant に扱われ、型検査が緩くなる
+- `strict-boolean-expressions` — 条件式に boolean 以外を書かせない。空文字や `0` が
+  暗黙に falsy になる事故を潰す。`strict-type-checked` にも入っていない主張の強いルールだが、
+  前回までの方針を引き継いで残した
+- `switch-exhaustiveness-check` — ユニオン型に対する `switch` の網羅性を要求する。
+  tsconfig の `noFallthroughCasesInSwitch` は網羅性までは見ない
+
+### 検討時に確認した挙動
+
+- `no-confusing-void-expression`（設定済み）は `onClick={() => setCount(1)}` を弾く。
+  `setCount` の戻り値が void でも、アロー関数の省略記法で void 式を返す形が対象になるため。
+  React のイベントハンドラで頻出する書き方なので、本家の `ignoreArrowShorthand` を
+  付けるかどうかを検討したが、**付けないことにした**。詳細は次節
+- `consistent-type-assertions` は既定で `assertionStyle: "as"`。`<string>x` は `.tsx` で
+  そもそも書けないため、実質 `.ts` 側の統一に効く
+- `no-dynamic-delete` は `delete rec[s]` のような動的キーの削除を弾く。
+  キーが動的な入れ物は `Map` / `Set` で持つ、という設計上の指針として入れた
+
+### `no-confusing-void-expression` を既定のまま使う理由
+
+React のイベントハンドラを `onClick={() => { setCount(1); }}` と書かせるのは
+煩わしいのではないか、という点を実測で検討した。結論は既定のまま使う。
+
+**1. `--fix` が波括弧を付けてくれる**
+
+このルールには自動修正がある。省略記法で書いても `fix:lint` が機械的に直す。
+
+```diff
+-export const cb = () => setCount(2);
++export const cb = () =>{  setCount(2); };
+```
+
+インデントは崩れるが、これは他のルールと同じで `fix:format` が整える。
+「冗長な生成コードは `--fix` で機械的に潰し、レビューの目を本質に向ける」という
+このリポジトリの方針にそのまま乗るため、手で直す場面が生じない。
+オプションを付ける動機だった煩わしさが、そもそも成立しなかった。
+
+**2. オプションは危険なケースまで一緒に通す**
+
+`ignoreArrowShorthand` はアロー関数の省略記法かどうかしか見ないため、
+許したいものと弾いてほしいものを選り分けられない。
+
+| コード                                  | 既定 | `ignoreArrowShorthand` |
+| --------------------------------------- | ---- | ---------------------- |
+| `onClick={() => setCount(1)}`           | 検出 | 通る                   |
+| `useEffect(() => setCount(1), [])`      | 検出 | 通る                   |
+| `[1, 2].map((n) => log(n))`（`void[]`） | 検出 | 通る                   |
+
+`useEffect` の戻り値は React がクリーンアップ関数と解釈する位置であり、
+`map` のほうは使い道のない `void[]` を作る。どちらも残しておきたい指摘だった。
+
+**3. 代替オプションでも的を絞れない**
+
+- `ignoreVoidReturningFunctions` — 上の 3 ケースすべてを通す。呼び出し先が void を
+  返す関数かどうかだけを見るため、省略記法以外の位置でも緩む。`ignoreArrowShorthand`
+  より広い
+- `ignoreVoidOperator` — メッセージが「`void` 演算子で明示せよ」に変わるだけで、
+  対象は減らない。`() => void setCount(1)` は波括弧より読みにくい
+
+**4. 型チェックとの守備範囲の切り分け**
+
+本当に事故になる `useEffect(() => setTimeout(f, 100))` は tsc が弾く。
+
+```
+error TS2322: Type 'number' is not assignable to type 'void | Destructor'.
+```
+
+つまりこのルールが担うのは、型としては合法な範囲での読みやすさと事故防止になる。
+自動修正がある以上、この守備範囲は維持しておく価値がある。
+
 ## default export の禁止
 
 `import/no-default-export` を error にした。default export は import 側で自由に名前を
@@ -349,6 +561,11 @@ unopinionated に入っていないが、カテゴリの指定で結果的に効
 - `no-confusing-array-with` — `Array.prototype.with` の紛らわしい使い方を弾く
 - `require-post-message-target-origin` — `postMessage` に targetOrigin を要求する
 
+typescript は有効な 90 件のうち 39 件が categories 由来。うち 5 件
+（`consistent-return` / `no-unnecessary-parameter-property-assignment` /
+`no-unsafe-type-assertion` / `no-useless-empty-export` / `require-array-sort-compare`）は
+strict / stylistic のどちらのプリセットにも入っていないが、カテゴリの指定で効いている。
+
 react はこの傾向がさらに強く、有効な 67 件のうち 46 件が categories 由来。
 React Compiler 由来のルールの多くが correctness に入っているためで、
 `purity` や `immutability` のように設定に一度も現れないまま効いているものがある。
@@ -391,25 +608,3 @@ React Compiler 由来のルールの多くが correctness に入っているた�
   ほぼ更新が止まっており、導入するには ESLint 側に TypeScript パーサごと持ち込む必要があった）。
   自動修正は付けていない。オペランドの入れ替えは評価順序を変え、
   副作用のある式では意味が変わってしまうため
-
-## 次の見直しの材料
-
-`categories` の設定上、correctness / suspicious / perf は自動的に有効になるため、
-検討が必要なのは pedantic / style / restriction / nursery の未設定ルールに限られる。
-
-### typescript（この 1 年の新規 27 件）
-
-| カテゴリ    | 状態   | ルール                                                                                                                                                                                                                                                    |
-| ----------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| correctness | 設定済 | `no-useless-default-assignment`                                                                                                                                                                                                                           |
-| suspicious  | 設定済 | `consistent-return` / `no-unnecessary-type-conversion` / `no-unnecessary-type-parameters`                                                                                                                                                                 |
-| pedantic    | 設定済 | `no-deprecated` / `prefer-nullish-coalescing` / `strict-boolean-expressions`                                                                                                                                                                              |
-| pedantic    | 未設定 | `prefer-includes` / `prefer-readonly-parameter-types` / `strict-void-return`                                                                                                                                                                              |
-| style       | 設定済 | `consistent-type-exports` / `method-signature-style`                                                                                                                                                                                                      |
-| style       | 未設定 | `class-literal-property-style` / `consistent-type-assertions` / `dot-notation` / `no-unnecessary-qualifier` / `parameter-properties` / `prefer-find` / `prefer-readonly` / `prefer-regexp-exec` / `prefer-string-starts-ends-with` / `unified-signatures` |
-| restriction | 設定済 | `no-invalid-void-type`                                                                                                                                                                                                                                    |
-| restriction | 未設定 | `explicit-member-accessibility` / `no-restricted-types`                                                                                                                                                                                                   |
-| nursery     | 設定済 | `no-unnecessary-condition` / `prefer-optional-chain`                                                                                                                                                                                                      |
-
-nursery カテゴリ自体は off だが、`no-unnecessary-condition` と
-`prefer-optional-chain` は個別に error 指定しているため有効になっている。

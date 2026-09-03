@@ -19,7 +19,7 @@
         - [ ] RuleTester による単体テストの追加（vitest 導入後）
     - [x] unicorn 見直し
     - [x] default export の禁止
-    - [ ] typescript 見直し
+    - [x] typescript 見直し
     - [x] react 見直し
     - [x] 関数コンポーネントは関数宣言に統一
     - [ ] boundaries の導入
