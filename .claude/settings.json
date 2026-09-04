@@ -6,6 +6,7 @@
     "sessionUrl": false
   },
   "autoMemoryEnabled": false,
+  "remoteControlAtStartup": false,
   "statusLine": {
     "type": "command",
     "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/statusline.sh\""
