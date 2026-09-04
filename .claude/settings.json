@@ -1,6 +1,10 @@
 {
   "language": "japanese",
-  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
   "autoMemoryEnabled": false,
   "statusLine": {
     "type": "command",
