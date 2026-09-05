@@ -1,11 +1,11 @@
 [settings]
 lockfile = true
 minimum_release_age = "2d"
-npm.package_manager = "pnpm"
+npm.package_manager = "auto"
 
 [tools]
 node = "lts"
-pnpm = "latest"
+pnpm = "12"
 
 lefthook = "latest"
 gitleaks = "latest"
