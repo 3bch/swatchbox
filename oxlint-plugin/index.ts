@@ -12,6 +12,7 @@
 // このプラグインが動作することを確認すること。
 import type { Plugin } from "@oxlint/plugins";
 
+import { componentFileName } from "#oxlint-plugin/component-file-name.ts";
 import { preferLessThan } from "#oxlint-plugin/prefer-less-than.ts";
 import { routesStructure } from "#oxlint-plugin/routes-structure.ts";
 
@@ -19,6 +20,7 @@ import { routesStructure } from "#oxlint-plugin/routes-structure.ts";
 const plugin: Plugin = {
   meta: { name: "local" },
   rules: {
+    "component-file-name": componentFileName,
     "prefer-less-than": preferLessThan,
     "routes-structure": routesStructure,
   },

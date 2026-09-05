@@ -502,6 +502,21 @@
     {
       "files": ["**/src/routes/__root.tsx", "**/src/routes/*/{index,route}.tsx"],
       "rules": { "react/only-export-components": "off" }
+    },
+    // コンポーネント置き場の .tsx だけ、ファイル名を PascalCase に固定し、
+    // ファイル名と同名のものを export することを要求する。
+    // ルート定義ファイル（__root.tsx / index.tsx / route.tsx）はコンポーネント置き場では
+    // ないため glob から外れており、巻き込まれない。
+    // routes 配下は -components/ に限っている。routes-structure は `-` 始まりの
+    // ディレクトリ名を何でも許すが、`-hooks/` や `-utils/` に置いた .tsx まで
+    // PascalCase を求める理由は無く、縛る対象を「コンポーネント置き場」に限定するため。
+    // shadcn/ui の生成物（components/ui/）は ignorePatterns で既に除外されている
+    {
+      "files": ["**/src/components/**/*.tsx", "**/src/routes/*/-components/*.tsx"],
+      "rules": {
+        "unicorn/filename-case": ["error", { "case": "pascalCase" }],
+        "local/component-file-name": "error"
+      }
     }
   ],
 

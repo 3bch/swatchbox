@@ -25,9 +25,8 @@
     - [ ] boundaries の導入
     - [x] project structure の導入
         - [x] routes 以下の構成を local/routes-structure として自前実装（oxlint-plugin/）
-        - [ ] src 全体へ広げる場合は eslint-plugin-project-structure を ESLint 側で検討
-              （oxlint はパーサを差し替えられず .css などを走査できないため）
-    - [ ] コンポーネントのファイル名を PascalCase に縛る
+    - [x] コンポーネントのファイル名を PascalCase に縛る
+        - [x] コンポーネント名とファイル名の一致を local/component-file-name として自前実装（oxlint-plugin/）
 - [x] vitest の導入（oxlint-plugin の RuleTester テストと commit-trailer の単体テストの受け皿）
 - [x] yaml だけ eslint でチェック
 - [x] lefthook 設定
