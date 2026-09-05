@@ -22,7 +22,11 @@
     - [x] typescript 見直し
     - [x] react 見直し
     - [x] 関数コンポーネントは関数宣言に統一
-    - [ ] boundaries の導入
+    - [x] boundaries の導入
+        - [x] eslint-plugin-boundaries を oxlint の jsPlugin として導入（公式が対応）
+        - [x] リゾルバは eslint-import-resolver-oxc + oxc-resolver（#/* の解決を確認済み）
+        - [x] route 同士の相互 import と、routes 外から route への import を禁止
+        - [x] リゾルバが効かなくなった場合の番人として no-unknown-dependencies を有効化
     - [x] project structure の導入
         - [x] routes 以下の構成を local/routes-structure として自前実装（oxlint-plugin/）
     - [x] コンポーネントのファイル名を PascalCase に縛る

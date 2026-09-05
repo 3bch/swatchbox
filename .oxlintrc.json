@@ -14,8 +14,9 @@
     "jsdoc"
   ],
 
-  // このリポジトリ専用のルール。実装は oxlint-plugin/ にある
-  "jsPlugins": ["./oxlint-plugin/index.ts"],
+  // このリポジトリ専用のルールは oxlint-plugin/ にある。boundaries は routes の
+  // 依存の向きを縛るために入れている（設定は settings と rules を参照）
+  "jsPlugins": ["./oxlint-plugin/index.ts", "eslint-plugin-boundaries"],
 
   "categories": {
     "correctness": "error",
@@ -42,6 +43,42 @@
 
     // src/routes/ 以下のディレクトリ構成を統一する（自前実装のルール）
     "local/routes-structure": "error",
+
+    // --- boundaries --- //
+    // settings.import/resolver が効かなくなると #/* の import は unknown 扱いになり、
+    // boundaries/dependencies は何も報告しないまま素通りする。それを鳴らすための番人。
+    // （リゾルバを外して違反 import を置き、このルールだけが報告することを確認済み）
+    "boundaries/no-unknown-dependencies": "error",
+
+    // ルート同士を切り離す。既定は allow のままにして routes に関わる 2 方向だけ塞ぐ。
+    // 全体を disallow で組む層構造は、まだ src/routes しか無い段階では宣言する対象が
+    // 無く、外部パッケージまで許可を列挙する羽目になるので割に合わない。
+    // import / 再 export / 動的 import / require のすべてが既定で検査対象になる
+    "boundaries/dependencies": [
+      "error",
+      {
+        "default": "allow",
+        "policies": [
+          {
+            "from": { "element": { "type": "route" } },
+            "disallow": {
+              "to": {
+                "element": {
+                  "type": "route",
+                  "captured": { "route": "!{{ from.element.captured.route }}" }
+                }
+              }
+            },
+            "message": "route '{{ from.element.captured.route }}' から route '{{ to.element.captured.route }}' を import できません。共有するものは src/components/ などへ移してください"
+          },
+          {
+            "from": { "element": { "type": "!route" } },
+            "disallow": { "to": { "element": { "type": "route" } } },
+            "message": "routes の外から route '{{ to.element.captured.route }}' を import できません。ルートは routeTree.gen.ts 経由でのみ参照されます"
+          }
+        ]
+      }
+    ],
 
     "eslint/eqeqeq": "error",
     "eslint/no-var": "error",
@@ -468,6 +505,35 @@
   },
 
   "settings": {
+    // --- boundaries --- //
+    // 検査対象。src の外（設定ファイルや scripts/、oxlint-plugin/）まで要素分類の
+    // 対象にすると、どの element にも当たらないファイルが増えるだけで得が無い
+    "boundaries/include": ["src/**/*.{ts,tsx}"],
+
+    // src/routes/<ルート名>/ の 1 つ 1 つを route という element として扱い、
+    // ディレクトリ名を route という名前で捕捉する。ルールから
+    // {{ from.element.captured.route }} で参照して「同じルートかどうか」を判定する。
+    // src/routes/__root.tsx は routes 直下のファイルで、その親フォルダは src/routes
+    // なので route には当たらず、下の app 側に落ちる。全ページ共通のレイアウトであり
+    // 個別ルートには属さない、という扱いで意図どおり。
+    // partialMatch を false にしてプロジェクトルートからの完全一致にする。既定の
+    // true は末尾一致で、'…/routes/<何か>' で終わるパスなら src の外でも当たってしまう。
+    // 本家も将来の既定を false にする予定と書いているため、最初から明示しておく
+    "boundaries/elements": [
+      { "type": "route", "pattern": "src/routes/*", "capture": ["route"], "partialMatch": false },
+      { "type": "app", "pattern": "src", "partialMatch": false }
+    ],
+
+    // oxlint はリゾルバを既定で有効にしないため明示する。これが無いと #/* が解決できず、
+    // boundaries/dependencies は違反を報告しないまま素通りする（本リポジトリでは
+    // unknown 扱いになるので no-unknown-dependencies 側が鳴る）。
+    // リゾルバは oxlint 本体と同じ oxc の解決系に揃えている
+    "import/resolver": {
+      "oxc": {
+        "tsconfig": { "configFile": "./tsconfig.json", "references": "auto" }
+      }
+    },
+
     "react": {
       "version": "19"
     },
