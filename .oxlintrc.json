@@ -40,6 +40,9 @@
     // 比較演算子の向きを `<` / `<=` に統一する（自前実装のルール）
     "local/prefer-less-than": "error",
 
+    // src/routes/ 以下のディレクトリ構成を統一する（自前実装のルール）
+    "local/routes-structure": "error",
+
     "eslint/eqeqeq": "error",
     "eslint/no-var": "error",
     "eslint/unicode-bom": "error",
@@ -415,7 +418,8 @@
     "react/button-has-type": "error",
     "react/no-danger": "error",
     "react/jsx-no-target-blank": "error",
-    // Fast Refresh（react-refresh 相当）
+    // Fast Refresh（react-refresh 相当）。TanStack Router のルートファイルでは
+    // 誤検知するため、overrides で対象から外している
     "react/only-export-components": ["error", { "allowConstantExport": true }],
 
     // --- 非推奨 API --- //
@@ -486,6 +490,18 @@
     {
       "files": ["*.config.ts", "*.config.js", "**/oxlint-plugin/index.ts"],
       "rules": { "import/no-default-export": "off" }
+    },
+    // TanStack Router のルートファイルでは react/only-export-components が誤検知する。
+    // このルールは「コンポーネントと非コンポーネントを同居させると Fast Refresh が
+    // 効かない」という前提だが、ルートファイルの Route は router plugin が HMR を扱い、
+    // コンポーネントは autoCodeSplitting で別モジュールへ切り出されるため実際には効く
+    // （__root.tsx と (root)/index.tsx を書き換え、Vite のログが hmr update のみで
+    // フルリロードが起きないことを確認済み）。
+    // ルートファイルにページ本体を直書きするか -components/ へ分けるかは、規模を見て
+    // 判断する。-components/ 配下はこのルールの対象のままにしてある
+    {
+      "files": ["**/src/routes/__root.tsx", "**/src/routes/*/{index,route}.tsx"],
+      "rules": { "react/only-export-components": "off" }
     }
   ],
 

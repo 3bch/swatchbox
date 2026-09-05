@@ -13,11 +13,15 @@
 import type { Plugin } from "@oxlint/plugins";
 
 import { preferLessThan } from "#oxlint-plugin/prefer-less-than.ts";
+import { routesStructure } from "#oxlint-plugin/routes-structure.ts";
 
 /** .oxlintrc.json の jsPlugins から読み込まれるプラグイン定義 */
 const plugin: Plugin = {
   meta: { name: "local" },
-  rules: { "prefer-less-than": preferLessThan },
+  rules: {
+    "prefer-less-than": preferLessThan,
+    "routes-structure": routesStructure,
+  },
 };
 
 export default plugin;

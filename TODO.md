@@ -23,7 +23,11 @@
     - [x] react 見直し
     - [x] 関数コンポーネントは関数宣言に統一
     - [ ] boundaries の導入
-    - [ ] project structure の導入
+    - [x] project structure の導入
+        - [x] routes 以下の構成を local/routes-structure として自前実装（oxlint-plugin/）
+        - [ ] src 全体へ広げる場合は eslint-plugin-project-structure を ESLint 側で検討
+              （oxlint はパーサを差し替えられず .css などを走査できないため）
+    - [ ] コンポーネントのファイル名を PascalCase に縛る
 - [x] vitest の導入（oxlint-plugin の RuleTester テストと commit-trailer の単体テストの受け皿）
 - [x] yaml だけ eslint でチェック
 - [x] lefthook 設定

@@ -1,6 +1,9 @@
-import { createRootRoute } from "@tanstack/react-router";
+import { Outlet, createRootRoute } from "@tanstack/react-router";
 
-import { RootLayout } from "#/components/root-layout.tsx";
+/** 全ページ共通のレイアウトを描画する */
+function RootLayout() {
+  return <Outlet />;
+}
 
 export const Route = createRootRoute({
   component: RootLayout,
