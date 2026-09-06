@@ -10,7 +10,7 @@
     - [x] execa や zod の検討
     - [x] bash 版（.claude/commit-trailer.sh）の削除判断
     - [x] scripts/ へ移して型チェック・lint の対象に含める
-- [ ] oxlint 設定
+- [x] oxlint 設定
     - [x] sort-imports でブロック内だけソート
     - [x] 一旦設定
     - [x] oxc と eslint 見直し
