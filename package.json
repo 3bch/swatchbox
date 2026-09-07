@@ -4,7 +4,8 @@
   "type": "module",
   "imports": {
     "#/*": "./src/*",
-    "#oxlint-plugin/*": "./oxlint-plugin/*"
+    "#oxlint-plugin/*": "./oxlint-plugin/*",
+    "#scripts/*": "./scripts/*"
   },
   "scripts": {
     "dev": "vite",

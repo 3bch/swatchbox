@@ -495,9 +495,13 @@
     "jsdoc/require-returns-description": "error",
     "jsdoc/check-tag-names": ["error", { "typed": true }],
 
+    "vitest/consistent-test-it": ["error", { "fn": "test", "withinDescribe": "test" }],
     "vitest/consistent-vitest-vi": "error",
     "vitest/no-import-node-test": "error",
     "vitest/prefer-describe-function-title": "error",
+    // categories により既定で有効。describe に関数をそのまま渡す形は
+    // prefer-describe-function-title が求めるものなので、タイトルの型は問わない
+    "vitest/valid-title": ["error", { "ignoreTypeOfDescribeName": true }],
     "vitest/prefer-called-times": "error",
     "vitest/prefer-to-be-falsy": "error",
     "vitest/prefer-to-be-truthy": "error",
