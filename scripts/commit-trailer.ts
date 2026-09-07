@@ -155,7 +155,7 @@ const run = (command: string, args: string[]): string => xSync(command, args).st
 const git = (...args: string[]): string => run("git", args);
 
 /** 浮動小数点の誤差が桁あふれしないよう、コストを小数 6 桁に丸める */
-const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
+export const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
 
 /** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
 const diff = (total: number, base: number): number => Math.max(total - base, 0);
@@ -438,8 +438,11 @@ const main = (): void => {
   );
 };
 
-try {
-  main();
-} catch {
-  // ccusage が無い、スキーマに合わない JSON が返った等。何も付けずに正常終了する。
+// import 時に走らせない。テストから関数を読み込めるようにするため。
+if (import.meta.main) {
+  try {
+    main();
+  } catch {
+    // ccusage が無い、スキーマに合わない JSON が返った等。何も付けずに正常終了する。
+  }
 }

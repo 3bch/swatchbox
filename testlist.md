@@ -28,6 +28,8 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 - テストは `scripts/commit-trailer.test.ts` に集約し、`describe` を関数単位で切る
 - 実行は `node --run test`（vitest）
 - 実コマンド（git / mise / ccusage）には依存させない
+- Red のコミットは型チェックとリントが失敗するため、`LEFTHOOK_EXCLUDE=type,lint git commit`
+  でその 2 ジョブだけ飛ばす。`--no-verify` はトレーラーの付与まで止めてしまう
 
 ## 現在地
 
