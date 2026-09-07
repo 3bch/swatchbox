@@ -438,7 +438,6 @@ const main = (): void => {
   );
 };
 
-// import 時に走らせない。テストから関数を読み込めるようにするため。
 if (import.meta.main) {
   try {
     main();
