@@ -154,8 +154,8 @@ const run = (command: string, args: string[]): string => xSync(command, args).st
 /** 実行した git コマンドの標準出力を返す */
 const git = (...args: string[]): string => run("git", args);
 
-/** 浮動小数点の誤差が桁あふれしないよう、コストを小数 6 桁に丸める */
-export const round6 = (value: number): number => Math.round(value * 1e6) / 1e6;
+/** 浮動小数点の誤差が桁あふれしないよう、コストを小数 3 桁に丸める */
+export const round3 = (value: number): number => Math.round(value * 1e3) / 1e3;
 
 /** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
 const diff = (total: number, base: number): number => Math.max(total - base, 0);
@@ -391,7 +391,14 @@ const main = (): void => {
     commit: diff(total, base(baseKey)),
   });
 
-  const cost = amount(round6(usage.totalCost), "Agent-Session-Estimated-Cost-USD");
+  // 累計と差分を同じ桁で丸める。トレーラーに書いた値がそのまま次回の基準として
+  // 読み戻されるため、桁が揃っていないと差分に丸め誤差が入り込む。
+  const costAmount = (total: number, baseKey: string): Amount => {
+    const rounded = round3(total);
+    return { session: rounded, commit: round3(diff(rounded, base(baseKey))) };
+  };
+
+  const cost = costAmount(usage.totalCost, "Agent-Session-Estimated-Cost-USD");
   const input = amount(usage.inputTokens, "Agent-Session-Tokens-Input");
   const output = amount(usage.outputTokens, "Agent-Session-Tokens-Output");
   const cacheCreation = amount(usage.cacheCreationTokens, "Agent-Session-Tokens-Cache-Creation");
@@ -412,7 +419,7 @@ const main = (): void => {
     "Agent-Model": models.join(", ") || baseTrailer("Agent-Model") || "unknown",
     "Agent-Effort": process.env["CLAUDE_EFFORT"] ?? "unknown",
     ...activity.context,
-    "Agent-Commit-Estimated-Cost-USD": round6(cost.commit),
+    "Agent-Commit-Estimated-Cost-USD": cost.commit,
     "Agent-Commit-Tokens-Input": input.commit,
     "Agent-Commit-Tokens-Output": output.commit,
     "Agent-Commit-Tokens-Cache-Creation": cacheCreation.commit,
