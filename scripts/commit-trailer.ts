@@ -158,7 +158,7 @@ const git = (...args: string[]): string => run("git", args);
 export const round3 = (value: number): number => Math.round(value * 1e3) / 1e3;
 
 /** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
-const diff = (total: number, base: number): number => Math.max(total - base, 0);
+export const diff = (total: number, base: number): number => Math.max(total - base, 0);
 
 /** modelBreakdowns をモデル名から総トークン数への対応に畳む */
 const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
