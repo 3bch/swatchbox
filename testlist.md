@@ -33,11 +33,10 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 
 ## 現在地
 
-- 対象: byValueDesc
-- 完了: diff の 1 サイクル（1〜5）、formatCounts の 1（テスト項目の再検討。
-  並び順を byValueDesc に切り出し、先行サイクルとして挿入した）
-- 次: 1. テスト項目の再検討
-- byValueDesc のサイクルを終えたら、formatCounts は 2. Red から再開する
+- 対象: formatCounts
+- 完了: diff の 1 サイクル（1〜5）、byValueDesc の 1 サイクル（1〜5）、
+  formatCounts の 1（テスト項目の再検討）
+- 次: 2. Red
 
 ## 実装側の設計変更
 
@@ -49,7 +48,8 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
       Node v24.20 で `import.meta.main` が使えることは確認済み
 - [ ] **B. テスト対象を named export にする**
       関数だけでなく、スキーマ定義（`Report` など）も対象に含む。
-      サイクルごとに、そこで必要になったものだけを export する（round3・diff は実施済み）
+      サイクルごとに、そこで必要になったものだけを export する
+      （round3・diff・byValueDesc は実施済み）
 - [ ] **C. `countActivity` を fs 非依存にする**
       引数をパス配列からファイル内容の文字列配列に変え、`readFileSync` は
       `readActivity` 側へ寄せる。JSONL の解釈ロジックを純粋関数にする
@@ -91,10 +91,10 @@ round3 の責務ではないことを、非有限な値を素通しすること�
 
 ### byValueDesc
 
-- [ ] value の降順に並ぶ
-- [ ] 同値の要素はキーのコードポイント順に並ぶ
+- [x] value の降順に並ぶ
+- [x] 同値の要素はキーのコードポイント順に並ぶ
       （挿入順や ccusage の出力順に依存しない）
-- [ ] 空の入力は空配列
+- [x] 空の入力は空配列
 
 ### formatCounts
 
