@@ -5,7 +5,7 @@
 // 純粋関数として切り出せる部分だけを対象にする。
 import { describe, expect, test } from "vitest";
 
-import { diff, round3 } from "#scripts/commit-trailer.ts";
+import { byValueDesc, diff, round3 } from "#scripts/commit-trailer.ts";
 
 describe(round3, () => {
   test("小数第 4 位が切り上がる", () => {
@@ -59,5 +59,45 @@ describe(diff, () => {
 
   test("基準が 0", () => {
     expect(diff(300, 0)).toBe(300);
+  });
+});
+
+describe(byValueDesc, () => {
+  test("value の降順に並ぶ", () => {
+    expect(
+      byValueDesc(
+        new Map([
+          ["Bash", 1],
+          ["Read", 3],
+          ["Edit", 2],
+        ]),
+      ),
+    ).toEqual([
+      ["Read", 3],
+      ["Edit", 2],
+      ["Bash", 1],
+    ]);
+  });
+
+  // 挿入順（Read → Bash）と辞書順（Bash → Read）が食い違う入力にしてある。
+  // 並びが JSONL の初登場順や ccusage の出力順に左右されないことの確認。
+  test("同値の要素はキーのコードポイント順に並ぶ", () => {
+    expect(
+      byValueDesc(
+        new Map([
+          ["Read", 2],
+          ["Bash", 2],
+          ["Edit", 5],
+        ]),
+      ),
+    ).toEqual([
+      ["Edit", 5],
+      ["Bash", 2],
+      ["Read", 2],
+    ]);
+  });
+
+  test("空の入力は空配列", () => {
+    expect(byValueDesc(new Map())).toEqual([]);
   });
 });
