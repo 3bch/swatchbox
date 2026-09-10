@@ -172,6 +172,12 @@ const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
     ]),
   );
 
+/** 名前ごとの数値を value の降順に並べる。同値はキーのコードポイント順。 `localeCompare` はロケール依存で、並びが環境によって変わるため使わない */
+export const byValueDesc = (counts: Map<string, number>): Array<[string, number]> =>
+  [...counts].toSorted(
+    ([leftName, left], [rightName, right]) => right - left || (leftName < rightName ? -1 : 1),
+  );
+
 /** 名前ごとの数値をトレーラー 1 行分の文字列にする */
 const formatCounts = (counts: Iterable<readonly [string, number]>): string =>
   [...counts].map(([name, value]) => `${name}=${value}`).join(",");

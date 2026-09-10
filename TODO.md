@@ -35,3 +35,10 @@
 - [x] yaml だけ eslint でチェック
 - [x] lefthook 設定
 - [x] シークレットスキャン
+- [ ] jsdoc の句点の配置を揃える（末尾に打たないもの 40 件、打つもの 1 件）
+    - [ ] 方針を決める（末尾に打たない／打つ）
+    - [ ] 一括で直す（src/components/ui/** は shadcn/ui 生成物のため対象外）
+- [ ] oxfmt の jsdoc 設定を見直す（既定のままだと日本語の説明が崩れる）
+    - [ ] 全角を 1 文字として数えるため、表示幅が printWidth を超えても折り返されない
+    - [ ] commentLineStrategy の "singleLine" が複数行の説明を畳み、句点の後に空白が入る
+    - [ ] 設定を直したうえで byValueDesc の jsdoc（89 文字・147 桁）を整え直す
