@@ -33,9 +33,11 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 
 ## 現在地
 
-- 対象: formatCounts
-- 完了: diff の 1 サイクル（1〜5）
+- 対象: byValueDesc
+- 完了: diff の 1 サイクル（1〜5）、formatCounts の 1（テスト項目の再検討。
+  並び順を byValueDesc に切り出し、先行サイクルとして挿入した）
 - 次: 1. テスト項目の再検討
+- byValueDesc のサイクルを終えたら、formatCounts は 2. Red から再開する
 
 ## 実装側の設計変更
 
@@ -54,6 +56,13 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 - [ ] **D. トレーラーの組み立てを `main()` から切り出す**
       `buildTrailers(...)` として純粋関数にし、`baseTrailer` を引数で受け取る。
       git / ccusage の呼び出しは `main()` に残す
+- [ ] **E. 値の並び順を出力側に寄せる**
+      `increases` はソートせず `Map` を返し、value 降順の比較は `byValueDesc`
+      として切り出す。`formatCounts` は `Map` を受けて内部で `byValueDesc` を
+      通し、`Agent-Model` 側も同じ関数を使う。session 区画の並びが出現順から
+      value 降順に変わるため、挙動を変えない A〜D とは違い仕様変更にあたる。
+      byValueDesc の新設は先行サイクルで行い、呼び出し元の切り替え
+      （`increases` の戻りと `Agent-Model`）は formatCounts のサイクルで行う
 
 ## テストリスト
 
@@ -80,11 +89,17 @@ round3 の責務ではないことを、非有限な値を素通しすること�
 - [x] 現在値と前回値が等しければ 0
 - [x] 基準が 0
 
+### byValueDesc
+
+- [ ] value の降順に並ぶ
+- [ ] 同値の要素は挿入順を保つ（`toSorted` が安定ソート）
+- [ ] 空の入力は空配列
+
 ### formatCounts
 
-- [ ] 複数要素が `name=value` のカンマ区切りになる
+- [ ] 複数要素が value の降順で `name=value` のカンマ区切りになる
+      （挿入順と違う順で渡し、byValueDesc が繋がっていることも示す）
 - [ ] 空の入力は空文字（トレーラーが空値で残ることの確認）
-- [ ] Map と配列のどちらも渡せる
 
 ### parseCounts
 
@@ -101,8 +116,9 @@ round3 の責務ではないことを、非有限な値を素通しすること�
 
 ### increases
 
+戻りは `Map`。並び順は byValueDesc の責務（設計変更 E）。
+
 - [ ] 増分のあるものだけが残る
-- [ ] 増分の多い順に並ぶ
 - [ ] 基準に無い名前は累計がそのまま増分になる
 - [ ] 減っている名前は落ちる（diff が 0 のため）
 
