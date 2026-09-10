@@ -5,7 +5,7 @@
 // 純粋関数として切り出せる部分だけを対象にする。
 import { describe, expect, test } from "vitest";
 
-import { round3 } from "#scripts/commit-trailer.ts";
+import { diff, round3 } from "#scripts/commit-trailer.ts";
 
 describe(round3, () => {
   test("小数第 4 位が切り上がる", () => {
@@ -41,5 +41,23 @@ describe(round3, () => {
     expect(round3(Number.POSITIVE_INFINITY)).toBe(Number.POSITIVE_INFINITY);
     expect(round3(Number.NEGATIVE_INFINITY)).toBe(Number.NEGATIVE_INFINITY);
     expect(round3(Number.NaN)).toBeNaN();
+  });
+});
+
+describe(diff, () => {
+  test("通常の差分", () => {
+    expect(diff(300, 120)).toBe(180);
+  });
+
+  test("前回値が現在値を上回る場合は 0", () => {
+    expect(diff(120, 300)).toBe(0);
+  });
+
+  test("現在値と前回値が等しければ 0", () => {
+    expect(diff(300, 300)).toBe(0);
+  });
+
+  test("基準が 0", () => {
+    expect(diff(300, 0)).toBe(300);
   });
 });
