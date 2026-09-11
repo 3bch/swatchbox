@@ -5,7 +5,7 @@
 // 純粋関数として切り出せる部分だけを対象にする。
 import { describe, expect, test } from "vitest";
 
-import { byValueDesc, diff, formatCounts, round3 } from "#scripts/commit-trailer.ts";
+import { byValueDesc, diff, formatCounts, parseCounts, round3 } from "#scripts/commit-trailer.ts";
 
 describe(round3, () => {
   test("小数第 4 位が切り上がる", () => {
@@ -117,5 +117,45 @@ describe(formatCounts, () => {
 
   test("空の入力は空文字", () => {
     expect(formatCounts(new Map())).toBe("");
+  });
+});
+
+describe(parseCounts, () => {
+  test("formatCounts の出力を往復で戻せる", () => {
+    const counts = new Map([
+      ["Bash", 1],
+      ["Read", 3],
+      ["Edit", 2],
+    ]);
+    expect(parseCounts(formatCounts(counts))).toEqual(counts);
+  });
+
+  test("空文字", () => {
+    expect(parseCounts("")).toEqual(new Map());
+  });
+
+  test("名前に = を含む場合は最後の = で区切る", () => {
+    expect(parseCounts("Agent(general-purpose)=2,a=b=3")).toEqual(
+      new Map([
+        ["Agent(general-purpose)", 2],
+        ["a=b", 3],
+      ]),
+    );
+  });
+
+  test("区切りが無い／先頭が = の壊れた要素は捨てる", () => {
+    expect(parseCounts("Read,=5,Edit=2")).toEqual(new Map([["Edit", 2]]));
+  });
+
+  test("数値にならない値は 0 になる", () => {
+    expect(parseCounts("Read=abc")).toEqual(new Map([["Read", 0]]));
+  });
+
+  test("非有限な値は 0 になる", () => {
+    expect(parseCounts("Read=Infinity")).toEqual(new Map([["Read", 0]]));
+  });
+
+  test("負の値は 0 になる", () => {
+    expect(parseCounts("Read=-5")).toEqual(new Map([["Read", 0]]));
   });
 });
