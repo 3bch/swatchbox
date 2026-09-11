@@ -5,7 +5,7 @@
 // 純粋関数として切り出せる部分だけを対象にする。
 import { describe, expect, test } from "vitest";
 
-import { byValueDesc, diff, round3 } from "#scripts/commit-trailer.ts";
+import { byValueDesc, diff, formatCounts, round3 } from "#scripts/commit-trailer.ts";
 
 describe(round3, () => {
   test("小数第 4 位が切り上がる", () => {
@@ -99,5 +99,23 @@ describe(byValueDesc, () => {
 
   test("空の入力は空配列", () => {
     expect(byValueDesc(new Map())).toEqual([]);
+  });
+});
+
+describe(formatCounts, () => {
+  test("複数要素が value の降順で name=value のカンマ区切りになる", () => {
+    expect(
+      formatCounts(
+        new Map([
+          ["Bash", 1],
+          ["Read", 3],
+          ["Edit", 2],
+        ]),
+      ),
+    ).toBe("Read=3,Edit=2,Bash=1");
+  });
+
+  test("空の入力は空文字", () => {
+    expect(formatCounts(new Map())).toBe("");
   });
 });
