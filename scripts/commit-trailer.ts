@@ -415,11 +415,9 @@ const main = (): void => {
   const cacheRead = amount(usage.cacheReadTokens, "Agent-Session-Tokens-Cache-Read");
   const activity = activityTrailers(readActivity(sessionId), amount, baseTrailer);
 
-  // このコミットまでにトークンが増えたモデルを、増分の多い順に並べる。
   const tokens = modelTokens(usage.modelBreakdowns);
-  const models = byValueDesc(
-    increases(tokens, parseCounts(baseTrailer("Agent-Session-Model-Tokens"))),
-  ).map(([name]) => name);
+  const tokenIncreases = increases(tokens, parseCounts(baseTrailer("Agent-Session-Model-Tokens")));
+  const models = byValueDesc(tokenIncreases).map(([name]) => name);
 
   // --if-exists replace により amend でも既存トレーラーが二重にならない。
   // ただし git はキー名を前方一致で比較するため、あるキーが別のキーの接頭辞に
