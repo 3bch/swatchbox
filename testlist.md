@@ -34,8 +34,6 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 ## 現在地
 
 - 対象: formatCounts
-- 完了: diff の 1 サイクル（1〜5）、byValueDesc の 1 サイクル（1〜5）、
-  formatCounts の 1（テスト項目の再検討）
 - 次: 2. Red
 
 ## 実装側の設計変更
