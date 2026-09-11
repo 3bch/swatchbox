@@ -188,9 +188,11 @@ export const formatCounts = (counts: Map<string, number>): string =>
     .map(([name, value]) => `${name}=${value}`)
     .join(",");
 
-// 値が壊れていた要素は捨てる。その名前は差分の基準を失って累計がそのまま
-// 計上されるだけで、トレーラーの付与自体は妨げない。
-/** formatCounts の逆変換 */
+/**
+ * formatCounts の逆変換。
+ *
+ * 値が壊れていた要素は捨てる。その名前は差分の基準を失って累計がそのまま 計上されるだけで、トレーラーの付与自体は妨げない。
+ */
 export const parseCounts = (value: string): Map<string, number> => {
   const counts = new Map<string, number>();
   for (const part of value.split(",")) {
@@ -199,7 +201,8 @@ export const parseCounts = (value: string): Map<string, number> => {
       continue;
     }
     const parsed = Number(part.slice(separator + 1));
-    counts.set(part.slice(0, separator), Number.isFinite(parsed) && 0 <= parsed ? parsed : 0);
+    const count = Number.isFinite(parsed) && 0 <= parsed ? parsed : 0;
+    counts.set(part.slice(0, separator), count);
   }
   return counts;
 };
