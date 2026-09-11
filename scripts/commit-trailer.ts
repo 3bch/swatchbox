@@ -182,9 +182,11 @@ export const byValueDesc = (counts: Map<string, number>): Array<[string, number]
     return leftName < rightName ? -1 : 1;
   });
 
-/** 名前ごとの数値をトレーラー 1 行分の文字列にする */
-const formatCounts = (counts: Iterable<readonly [string, number]>): string =>
-  [...counts].map(([name, value]) => `${name}=${value}`).join(",");
+/** 名前ごとの数値を value の降順でトレーラー 1 行分の文字列にする */
+export const formatCounts = (counts: Map<string, number>): string =>
+  byValueDesc(counts)
+    .map(([name, value]) => `${name}=${value}`)
+    .join(",");
 
 // 値が壊れていた要素は捨てる。その名前は差分の基準を失って累計がそのまま
 // 計上されるだけで、トレーラーの付与自体は妨げない。
@@ -201,15 +203,13 @@ const parseCounts = (value: string): Map<string, number> => {
   return counts;
 };
 
-/** 名前ごとの累計から前回コミットとの増分をとり、増分の多い順に並べる */
-const increases = (
-  total: Map<string, number>,
-  base: Map<string, number>,
-): Array<[string, number]> =>
-  [...total]
-    .map(([name, value]): [string, number] => [name, diff(value, base.get(name) ?? 0)])
-    .filter(([, increase]) => 0 < increase)
-    .toSorted(([, left], [, right]) => right - left);
+/** 名前ごとの累計から前回コミットとの増分をとり、増分のあったものだけを残す */
+const increases = (total: Map<string, number>, base: Map<string, number>): Map<string, number> =>
+  new Map(
+    [...total]
+      .map(([name, value]): [string, number] => [name, diff(value, base.get(name) ?? 0)])
+      .filter(([, increase]) => 0 < increase),
+  );
 
 /** 対応表の値を 1 加算する */
 const increment = (counts: Map<string, number>, name: string): void => {
@@ -417,9 +417,9 @@ const main = (): void => {
 
   // このコミットまでにトークンが増えたモデルを、増分の多い順に並べる。
   const tokens = modelTokens(usage.modelBreakdowns);
-  const models = increases(tokens, parseCounts(baseTrailer("Agent-Session-Model-Tokens"))).map(
-    ([name]) => name,
-  );
+  const models = byValueDesc(
+    increases(tokens, parseCounts(baseTrailer("Agent-Session-Model-Tokens"))),
+  ).map(([name]) => name);
 
   // --if-exists replace により amend でも既存トレーラーが二重にならない。
   // ただし git はキー名を前方一致で比較するため、あるキーが別のキーの接頭辞に
