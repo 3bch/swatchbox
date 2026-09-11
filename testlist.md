@@ -33,8 +33,8 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 
 ## 現在地
 
-- 対象: formatCounts
-- 次: 2. Red
+- 対象: parseCounts
+- 次: 1. テスト項目の再検討
 
 ## 実装側の設計変更
 
@@ -47,14 +47,14 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 - [ ] **B. テスト対象を named export にする**
       関数だけでなく、スキーマ定義（`Report` など）も対象に含む。
       サイクルごとに、そこで必要になったものだけを export する
-      （round3・diff・byValueDesc は実施済み）
+      （round3・diff・byValueDesc・formatCounts は実施済み）
 - [ ] **C. `countActivity` を fs 非依存にする**
       引数をパス配列からファイル内容の文字列配列に変え、`readFileSync` は
       `readActivity` 側へ寄せる。JSONL の解釈ロジックを純粋関数にする
 - [ ] **D. トレーラーの組み立てを `main()` から切り出す**
       `buildTrailers(...)` として純粋関数にし、`baseTrailer` を引数で受け取る。
       git / ccusage の呼び出しは `main()` に残す
-- [ ] **E. 値の並び順を出力側に寄せる**
+- [x] **E. 値の並び順を出力側に寄せる**
       `increases` はソートせず `Map` を返し、value 降順の比較は `byValueDesc`
       として切り出す。`formatCounts` は `Map` を受けて内部で `byValueDesc` を
       通し、`Agent-Model` 側も同じ関数を使う。session 区画の並びが出現順から
@@ -96,9 +96,9 @@ round3 の責務ではないことを、非有限な値を素通しすること�
 
 ### formatCounts
 
-- [ ] 複数要素が value の降順で `name=value` のカンマ区切りになる
+- [x] 複数要素が value の降順で `name=value` のカンマ区切りになる
       （挿入順と違う順で渡し、byValueDesc が繋がっていることも示す）
-- [ ] 空の入力は空文字（トレーラーが空値で残ることの確認）
+- [x] 空の入力は空文字（トレーラーが空値で残ることの確認）
 
 ### parseCounts
 
