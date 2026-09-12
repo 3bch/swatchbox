@@ -1,7 +1,9 @@
 import yml from "eslint-plugin-yml";
 import { defineConfig, globalIgnores } from "eslint/config";
 
-/** YAML ファイルのみを対象とする ESLint 設定 */
+/**
+ * YAML ファイルのみを対象とする ESLint 設定。
+ */
 export default defineConfig([
   // ESLint は設定の files に関わらず js/mjs/cjs を既定で走査するため、
   // JS/TS は oxlint の担当として除外する。

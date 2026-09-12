@@ -24,13 +24,20 @@ import type { Rule } from "@oxlint/plugins";
 // ルートの起点。Windows 由来の `\` 区切りも受けられるようにしている
 const ROUTES_DIR_PATTERN = /(?:^|[/\\])src[/\\]routes[/\\](.+)$/u;
 
-/** ジェネレータが要求する、routes 直下に置ける唯一のファイル */
+/**
+ * ジェネレータが要求する、routes 直下に置ける唯一のファイル。
+ */
 const ROOT_ROUTE_FILE = "__root.tsx";
 
-/** route ディレクトリの直下に置けるルート定義ファイル */
+/**
+ * route ディレクトリの直下に置けるルート定義ファイル。
+ */
 const ROUTE_FILES = ["route.tsx", "index.tsx"];
 
-/** ファイルパスを src/routes/ からの相対セグメントに分解する。 routes 配下でなければ null を返す。 */
+/**
+ * ファイルパスを src/routes/ からの相対セグメントに分解する。
+ * routes 配下でなければ null を返す。
+ */
 function getRouteSegments(filename: string): string[] | null {
   const relative = ROUTES_DIR_PATTERN.exec(filename)?.[1];
   if (relative === undefined) {
@@ -40,7 +47,9 @@ function getRouteSegments(filename: string): string[] | null {
   return relative.split(/[/\\]/u);
 }
 
-/** src/routes/ 以下のディレクトリ構成を統一するルール */
+/**
+ * src/routes/ 以下のディレクトリ構成を統一するルール。
+ */
 export const routesStructure: Rule = {
   meta: {
     type: "problem",

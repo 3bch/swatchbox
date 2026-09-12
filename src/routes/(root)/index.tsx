@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-/** トップページを描画する */
+/**
+ * トップページを描画する。
+ */
 function Home() {
   return <div>swatchbox</div>;
 }

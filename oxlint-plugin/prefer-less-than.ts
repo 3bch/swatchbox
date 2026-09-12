@@ -11,7 +11,9 @@
 // 書き換えは人（またはエージェント）の判断に委ねる。
 import type { Rule } from "@oxlint/plugins";
 
-/** `>` / `>=` を検出し、`<` / `<=` での記述を促すルール */
+/**
+ * `>` / `>=` を検出し、`<` / `<=` での記述を促すルール。
+ */
 export const preferLessThan: Rule = {
   meta: {
     type: "suggestion",

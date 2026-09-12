@@ -19,16 +19,23 @@
 // そもそも import/no-default-export がリポジトリ全体で禁止しているため実害は無い。
 import type { ESTree, Rule } from "@oxlint/plugins";
 
-/** ファイル名に許す形。unicorn/filename-case の pascalCase と同じ範囲を意図している */
+/**
+ * ファイル名に許す形。
+ * unicorn/filename-case の pascalCase と同じ範囲を意図している。
+ */
 const PASCAL_CASE = /^[A-Z][A-Za-z0-9]*$/u;
 
-/** パスからファイル名を取り出し、拡張子を落とす */
+/**
+ * パスからファイル名を取り出し、拡張子を落とす。
+ */
 function getBaseName(filename: string): string {
   const base = filename.split(/[/\\]/u).at(-1) ?? "";
   return base.replace(/\.[^.]+$/u, "");
 }
 
-/** export 宣言から、値として export されている名前を取り出す */
+/**
+ * export 宣言から、値として export されている名前を取り出す。
+ */
 function getExportedNames(node: ESTree.ExportNamedDeclaration): string[] {
   // `export type { Card }` の形
   if (node.exportKind === "type") {
@@ -64,7 +71,9 @@ function getExportedNames(node: ESTree.ExportNamedDeclaration): string[] {
   return names;
 }
 
-/** ファイル名と同じ名前が export されていることを要求するルール */
+/**
+ * ファイル名と同じ名前が export されていることを要求するルール。
+ */
 export const componentFileName: Rule = {
   meta: {
     type: "problem",

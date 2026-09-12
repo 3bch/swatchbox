@@ -19,7 +19,9 @@ const ruleTester = new RuleTester({
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion
 const rule = routesStructure as unknown as Parameters<RuleTester["run"]>[1];
 
-/** src/routes/ からの相対パスを、検査対象になる絶対パスに直す */
+/**
+ * src/routes/ からの相対パスを、検査対象になる絶対パスに直す。
+ */
 function routes(relative: string): string {
   return `/project/src/routes/${relative}`;
 }

@@ -16,7 +16,9 @@ import { componentFileName } from "#oxlint-plugin/component-file-name.ts";
 import { preferLessThan } from "#oxlint-plugin/prefer-less-than.ts";
 import { routesStructure } from "#oxlint-plugin/routes-structure.ts";
 
-/** .oxlintrc.json の jsPlugins から読み込まれるプラグイン定義 */
+/**
+ * .oxlintrc.json の jsPlugins から読み込まれるプラグイン定義。
+ */
 const plugin: Plugin = {
   meta: { name: "local" },
   rules: {

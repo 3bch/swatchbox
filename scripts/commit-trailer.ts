@@ -71,7 +71,9 @@ import process from "node:process";
 import { xSync } from "tinyexec";
 import { z } from "zod";
 
-/** モデル別の利用量（ccusage が返す modelBreakdowns の要素） */
+/**
+ * モデル別の利用量（ccusage が返す modelBreakdowns の要素）。
+ */
 const Breakdown = z.object({
   modelName: z.string(),
   inputTokens: z.number(),
@@ -80,7 +82,9 @@ const Breakdown = z.object({
   cacheReadTokens: z.number(),
 });
 
-/** セッション単位の利用量（ccusage session が返す session 配列の要素） */
+/**
+ * セッション単位の利用量（ccusage session が返す session 配列の要素）。
+ */
 const Session = z.object({
   period: z.string(),
   totalCost: z.number(),
@@ -91,11 +95,16 @@ const Session = z.object({
   modelBreakdowns: z.array(Breakdown),
 });
 
-/** ccusage session --json が返すレポート全体 */
+/**
+ * ccusage session --json が返すレポート全体。
+ */
 const Report = z.object({ session: z.array(Session) });
 
 // 未知のキーは z.object が黙って捨てるため、読む項目だけを並べればよい。
-/** assistant のメッセージに含まれるブロック。tool_use 以外は種別しか見ない */
+/**
+ * assistant のメッセージに含まれるブロック。
+ * tool_use 以外は種別しか見ない。
+ */
 const Block = z.object({
   type: z.string(),
   text: z.string().optional(),
@@ -103,14 +112,19 @@ const Block = z.object({
   input: z.object({ subagent_type: z.string().optional() }).optional(),
 });
 
-/** リクエストが報告する利用量。コンテキスト量の算出にだけ使う */
+/**
+ * リクエストが報告する利用量。
+ * コンテキスト量の算出にだけ使う。
+ */
 const LineUsage = z.object({
   input_tokens: z.number().default(0),
   cache_creation_input_tokens: z.number().default(0),
   cache_read_input_tokens: z.number().default(0),
 });
 
-/** Claude Code が書く JSONL の 1 行 */
+/**
+ * Claude Code が書く JSONL の 1 行。
+ */
 const Line = z.object({
   type: z.string(),
   isSidechain: z.boolean().optional(),
@@ -124,16 +138,24 @@ const Line = z.object({
     .optional(),
 });
 
-/** モデル別の利用量 */
+/**
+ * モデル別の利用量。
+ */
 type Breakdown = z.infer<typeof Breakdown>;
 
-/** 累計と差分の組。トレーラーには両方を記録する */
+/**
+ * 累計と差分の組。
+ * トレーラーには両方を記録する。
+ */
 interface Amount {
   session: number;
   commit: number;
 }
 
-/** JSONL から数えたセッションの活動量。コンテキスト量以外はいずれも累計 */
+/**
+ * JSONL から数えたセッションの活動量。
+ * コンテキスト量以外はいずれも累計。
+ */
 interface Activity {
   requests: number;
   toolCalls: number;
@@ -142,25 +164,38 @@ interface Activity {
   contextTokens: number;
 }
 
-/** トレーラーのキーと値の組 */
+/**
+ * トレーラーのキーと値の組。
+ */
 type Trailers = Record<string, string | number>;
 
 // 終了コードは見ない。存在しない参照の問い合わせなど、非ゼロ終了が異常ではなく
 // 分岐の材料になる呼び出しがあるため。コマンド自体を起動できない場合は例外になり、
 // トレーラーを付けずに終わる。
-/** 外部コマンドを実行して標準出力を返す */
+/**
+ * 外部コマンドを実行して標準出力を返す。
+ */
 const run = (command: string, args: string[]): string => xSync(command, args).stdout.trim();
 
-/** 実行した git コマンドの標準出力を返す */
+/**
+ * 実行した git コマンドの標準出力を返す。
+ */
 const git = (...args: string[]): string => run("git", args);
 
-/** 浮動小数点の誤差が桁あふれしないよう、コストを小数 3 桁に丸める */
+/**
+ * 浮動小数点の誤差が桁あふれしないよう、コストを小数 3 桁に丸める。
+ */
 export const round3 = (value: number): number => Math.round(value * 1e3) / 1e3;
 
-/** 差分をとる。前回値が現在値を上回る異常時は 0 に丸める */
+/**
+ * 差分をとる。
+ * 前回値が現在値を上回る異常時は 0 に丸める。
+ */
 export const diff = (total: number, base: number): number => Math.max(total - base, 0);
 
-/** modelBreakdowns をモデル名から総トークン数への対応に畳む */
+/**
+ * modelBreakdowns をモデル名から総トークン数への対応に畳む。
+ */
 const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
   new Map(
     breakdowns.map((breakdown) => [
@@ -172,7 +207,11 @@ const modelTokens = (breakdowns: Breakdown[]): Map<string, number> =>
     ]),
   );
 
-/** 名前ごとの数値を value の降順に並べる。同値はキーのコードポイント順。 `localeCompare` はロケール依存で、並びが環境によって変わるため使わない */
+/**
+ * 名前ごとの数値を value の降順に並べる。
+ * 同値はキーのコードポイント順。
+ * `localeCompare` はロケール依存で、並びが環境によって変わるため使わない。
+ */
 export const byValueDesc = (counts: Map<string, number>): Array<[string, number]> =>
   [...counts].toSorted(([leftName, leftValue], [rightName, rightValue]) => {
     if (leftValue !== rightValue) {
@@ -182,7 +221,9 @@ export const byValueDesc = (counts: Map<string, number>): Array<[string, number]
     return leftName < rightName ? -1 : 1;
   });
 
-/** 名前ごとの数値を value の降順でトレーラー 1 行分の文字列にする */
+/**
+ * 名前ごとの数値を value の降順でトレーラー 1 行分の文字列にする。
+ */
 export const formatCounts = (counts: Map<string, number>): string =>
   byValueDesc(counts)
     .map(([name, value]) => `${name}=${value}`)
@@ -191,7 +232,8 @@ export const formatCounts = (counts: Map<string, number>): string =>
 /**
  * formatCounts の逆変換。
  *
- * 値が壊れていた要素は捨てる。その名前は差分の基準を失って累計がそのまま 計上されるだけで、トレーラーの付与自体は妨げない。
+ * 値が壊れていた要素は捨てる。
+ * その名前は差分の基準を失って累計がそのまま計上されるだけで、トレーラーの付与自体は妨げない。
  */
 export const parseCounts = (value: string): Map<string, number> => {
   const counts = new Map<string, number>();
@@ -207,7 +249,9 @@ export const parseCounts = (value: string): Map<string, number> => {
   return counts;
 };
 
-/** 名前ごとの累計から前回コミットとの増分をとり、増分のあったものだけを残す */
+/**
+ * 名前ごとの累計から前回コミットとの増分をとり、増分のあったものだけを残す。
+ */
 const increases = (total: Map<string, number>, base: Map<string, number>): Map<string, number> =>
   new Map(
     [...total]
@@ -215,16 +259,22 @@ const increases = (total: Map<string, number>, base: Map<string, number>): Map<s
       .filter(([, increase]) => 0 < increase),
   );
 
-/** 対応表の値を 1 加算する */
+/**
+ * 対応表の値を 1 加算する。
+ */
 const increment = (counts: Map<string, number>, name: string): void => {
   counts.set(name, (counts.get(name) ?? 0) + 1);
 };
 
-/** メッセージの content を、種別を問わずテキストとして連結する */
+/**
+ * メッセージの content を、種別を問わずテキストとして連結する。
+ */
 const contentText = (content: string | Array<z.infer<typeof Block>>): string =>
   typeof content === "string" ? content : content.map((block) => block.text ?? "").join("");
 
-/** セッションの JSONL（サブエージェント分を含む）のパスを返す */
+/**
+ * セッションの JSONL（サブエージェント分を含む）のパスを返す。
+ */
 const sessionFiles = (sessionId: string): string[] => {
   const projects = path.join(
     process.env["CLAUDE_CONFIG_DIR"] ?? path.join(homedir(), ".claude"),
@@ -240,7 +290,10 @@ const sessionFiles = (sessionId: string): string[] => {
 
 // 読み取りに失敗しても undefined を返すだけにする。ここで例外を投げると
 // 呼び出し元まで巻き込んで ccusage 由来のトレーラーも落ちてしまうため。
-/** JSONL からセッションの活動量を数える。数えられなければ undefined */
+/**
+ * JSONL からセッションの活動量を数える。
+ * 数えられなければ undefined。
+ */
 const readActivity = (sessionId: string): Activity | undefined => {
   try {
     return countActivity(sessionFiles(sessionId));
@@ -249,7 +302,9 @@ const readActivity = (sessionId: string): Activity | undefined => {
   }
 };
 
-/** JSONL を走査して活動量を数える */
+/**
+ * JSONL を走査して活動量を数える。
+ */
 const countActivity = (files: string[]): Activity | undefined => {
   if (files.length === 0) {
     return undefined;
@@ -317,7 +372,10 @@ const countActivity = (files: string[]): Activity | undefined => {
   return { requests: requests.size, toolCalls, tools, skills, contextTokens };
 };
 
-/** JSONL 由来の値をトレーラーの 3 区画に振り分ける。読めていなければどれも空 */
+/**
+ * JSONL 由来の値をトレーラーの 3 区画に振り分ける。
+ * 読めていなければどれも空。
+ */
 const activityTrailers = (
   activity: Activity | undefined,
   amount: (total: number, baseKey: string) => Amount,
@@ -349,7 +407,9 @@ const activityTrailers = (
   };
 };
 
-/** コミットメッセージにトレーラーを付与する */
+/**
+ * コミットメッセージにトレーラーを付与する。
+ */
 const main = (): void => {
   const [msgFile, commitSource = "", commitSha = ""] = process.argv.slice(2);
   const sessionId = process.env["CLAUDE_CODE_SESSION_ID"] ?? "";

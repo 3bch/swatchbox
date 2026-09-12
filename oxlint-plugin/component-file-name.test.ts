@@ -24,7 +24,9 @@ const ruleTester = new RuleTester({
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion
 const rule = componentFileName as unknown as Parameters<RuleTester["run"]>[1];
 
-/** コンポーネント置き場に見立てた絶対パスを組み立てる */
+/**
+ * コンポーネント置き場に見立てた絶対パスを組み立てる。
+ */
 function component(name: string): string {
   return `/project/src/components/${name}`;
 }
