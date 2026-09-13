@@ -1,7 +1,7 @@
 [settings]
 lockfile = true
 minimum_release_age = "2d"
-npm.package_manager = "auto"
+npm.package_manager = "pnpm"
 
 [tools]
 node = "lts"
