@@ -47,7 +47,7 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 - [ ] **B. テスト対象を named export にする**
       関数だけでなく、スキーマ定義（`Report` など）も対象に含む。
       サイクルごとに、そこで必要になったものだけを export する
-      （round3・diff・byValueDesc・formatCounts・parseCounts は実施済み）
+      （round3・diff・byValueDesc・formatCounts・parseCounts・diffCounts は実施済み）
 - [ ] **C. `countActivity` を fs 非依存にする**
       引数をパス配列からファイル内容の文字列配列に変え、`readFileSync` は
       `readActivity` 側へ寄せる。JSONL の解釈ロジックを純粋関数にする

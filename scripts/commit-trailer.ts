@@ -252,7 +252,10 @@ export const parseCounts = (value: string): Map<string, number> => {
 /**
  * 名前ごとの累計から前回コミットとの増分をとり、増分のあったものだけを残す。
  */
-const diffCounts = (total: Map<string, number>, base: Map<string, number>): Map<string, number> =>
+export const diffCounts = (
+  total: Map<string, number>,
+  base: Map<string, number>,
+): Map<string, number> =>
   new Map(
     [...total]
       .map(([name, value]): [string, number] => [name, diff(value, base.get(name) ?? 0)])
