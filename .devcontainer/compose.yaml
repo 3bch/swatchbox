@@ -16,6 +16,7 @@ services:
       - 'playwright-cache:/home/vscode/.cache/ms-playwright'
     environment:
       - 'TZ=Asia/Tokyo'
+      - 'CLAUDE_CODE_AUTO_CONNECT_IDE=false'
 
 volumes:
   mise-data: {}
