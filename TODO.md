@@ -1,47 +1,24 @@
-- [x] vite 設定
-- [x] tsconfig 設定
-- [x] statusline の警告を黄色に
-- [x] コミットのトレーラー設定
-    - [x] merge の際にうまく動くのか確認
-    - [x] コンテキストトークン数の記録（別の求め方の検討）
-    - [x] Request 数、Tool 呼び出し回数、 Skill 呼び出し回数、の記録
-    - [x] TypeScript 版への移行
-    - [ ] commit-trailer の単体テストの追加
-    - [x] execa や zod の検討
-    - [x] bash 版（.claude/commit-trailer.sh）の削除判断
-    - [x] scripts/ へ移して型チェック・lint の対象に含める
-- [x] oxlint 設定
-    - [x] sort-imports でブロック内だけソート
-    - [x] 一旦設定
-    - [x] oxc と eslint 見直し
-    - [x] eslint-plugin-etc の prefer-less-than の検討(場合によっては自前実装もあり)
-        - [x] JS plugin で local/prefer-less-than として自前実装（oxlint-plugin/）
-        - [x] RuleTester による単体テストの追加
-    - [x] unicorn 見直し
-    - [x] default export の禁止
-    - [x] typescript 見直し
-    - [x] react 見直し
-    - [x] 関数コンポーネントは関数宣言に統一
-    - [x] boundaries の導入
-        - [x] eslint-plugin-boundaries を oxlint の jsPlugin として導入（公式が対応）
-        - [x] リゾルバは eslint-import-resolver-oxc + oxc-resolver（#/* の解決を確認済み）
-        - [x] route 同士の相互 import と、routes 外から route への import を禁止
-        - [x] リゾルバが効かなくなった場合の番人として no-unknown-dependencies を有効化
-    - [x] project structure の導入
-        - [x] routes 以下の構成を local/routes-structure として自前実装（oxlint-plugin/）
-    - [x] コンポーネントのファイル名を PascalCase に縛る
-        - [x] コンポーネント名とファイル名の一致を local/component-file-name として自前実装（oxlint-plugin/）
-- [x] vitest の導入（oxlint-plugin の RuleTester テストと commit-trailer の単体テストの受け皿）
-- [x] yaml だけ eslint でチェック
-- [x] lefthook 設定
-- [x] シークレットスキャン
-- [x] jsdoc の句点の配置を揃える（末尾に打たないもの 40 件、打つもの 1 件）
-    - [x] 方針を決める（末尾にも打つ）
-    - [x] 一括で直す（src/components/ui/** は shadcn/ui 生成物のため対象外）
-- [x] oxfmt の jsdoc 設定を見直す（既定のままだと日本語の説明が崩れる）
-    - [x] 全角を 1 文字として数えるため、表示幅が printWidth を超えても折り返されない
-        - [x] 1 文 1 行かつ 1 文 60 文字までとする規約で抑える（CLAUDE.md に記載）
-    - [x] commentLineStrategy の "singleLine" が複数行の説明を畳み、句点の後に空白が入る
-        - [x] 空白の混入は lineWrappingStyle の "balance" で止まる
-        - [x] commentLineStrategy は "multiline" に統一する
-    - [x] 設定を直したうえで byValueDesc の jsdoc（89 文字・128 桁）を整え直す
+## 前提
+
+- スマホ中心で使う
+- 視点は固定、描画は SVG
+- 箱と蓋は 1 種類ずつ、寸法は固定
+- prototype/ はやりたいことを伝えるための試作で、仕様ではない
+- 検討結果は docs/ に置く
+
+## TODO
+
+- [ ] commit-trailer の単体テストの追加（進め方と現在地は testlist.md）
+- [ ] ユースケースを整理する
+    - [ ] 使う人と使う場面を書き出す
+    - [ ] 場面ごとにやりたいことを洗い出す
+    - [ ] MVP に含めるユースケースを選ぶ（含めないものも明記する）
+- [ ] 情報設計を固める
+    - [ ] アプリで扱う情報（布、完成イメージなど）を洗い出す
+    - [ ] 情報どうしの関係と、保存が必要な情報を決める
+    - [ ] 画面一覧と遷移を決める
+    - [ ] 画面ごとに表示する情報と操作を決める
+- [ ] 実装に入る前の準備
+    - [ ] スタイリング手段を決める（Tailwind CSS など）
+    - [ ] shadcn/ui を導入する
+    - [ ] 公開先と、アクセスを身内に限るかを決める
