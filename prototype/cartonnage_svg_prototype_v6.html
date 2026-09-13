@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cartonnage SVG Prototype v5</title>
+    <style>
+      :root {
+        --bg: #f5f2ee;
+        --panel: #fff;
+        --ink: #292725;
+        --muted: #746d68;
+        --accent: #bd5f75;
+        --soft: #f7e9ed;
+        --line: #ddd5cf;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Noto Sans JP",
+          sans-serif;
+      }
+      .app {
+        max-width: 980px;
+        margin: auto;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 4px 0 12px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 28px rgba(55, 42, 34, 0.07);
+      }
+      .modebar {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 12px 12px 0;
+      }
+      button {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 12px;
+        padding: 11px 6px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      button.active {
+        background: var(--soft);
+        border-color: #d28ca0;
+        color: #8b3046;
+      }
+      .viewer {
+        padding: 6px 8px 2px;
+      }
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        background: linear-gradient(#fff, #fbfaf8);
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        border-top: 1px solid var(--line);
+        padding: 12px;
+      }
+      .control {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+      }
+      .control label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 7px;
+      }
+      .control input {
+        width: 100%;
+      }
+      .note {
+        padding: 0 12px 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.65;
+      }
+      .badge {
+        display: inline-block;
+        border: 1px solid #e2dad3;
+        background: #f6f2ee;
+        border-radius: 999px;
+        padding: 3px 8px;
+        margin: 0 4px 5px 0;
+      }
+      @media (max-width: 680px) {
+        .app {
+          padding: 8px;
+        }
+        .controls {
+          grid-template-columns: 1fr;
+        }
+        button {
+          font-size: 13px;
+        }
+        .modebar {
+          gap: 5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>カルトナージュ SVG シミュレーション — v6</h1>
+      <div class="card">
+        <div class="modebar">
+          <button id="bClosed" class="active">蓋あり</button>
+          <button id="bOpen">蓋なし</button>
+          <button id="bCut">手前透過</button>
+        </div>
+
+        <div class="viewer">
+          <svg id="stage" viewBox="0 0 760 560" aria-label="正方形のカルトナージュ箱">
+            <defs>
+              <filter id="softShadow" x="-40%" y="-60%" width="180%" height="220%">
+                <feGaussianBlur stdDeviation="9" />
+              </filter>
+              <filter id="innerSoft" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="2.2" />
+              </filter>
+
+              <linearGradient id="shadeL" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#000" stop-opacity=".04" />
+                <stop offset="1" stop-color="#000" stop-opacity=".16" />
+              </linearGradient>
+              <linearGradient id="shadeR" x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#000" stop-opacity=".03" />
+                <stop offset="1" stop-color="#000" stop-opacity=".18" />
+              </linearGradient>
+              <linearGradient id="shadeInner" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#000" stop-opacity=".02" />
+                <stop offset="1" stop-color="#000" stop-opacity=".14" />
+              </linearGradient>
+
+              <pattern id="patOuter" width="24" height="24" patternUnits="userSpaceOnUse">
+                <rect width="24" height="24" fill="#ca8693" />
+                <path d="M0 7H24M0 19H24" stroke="#fff" stroke-opacity=".12" />
+              </pattern>
+              <pattern id="patInner" width="20" height="20" patternUnits="userSpaceOnUse">
+                <rect width="20" height="20" fill="#eadfce" />
+                <circle cx="5" cy="5" r="1.2" fill="#c8baa6" />
+                <circle cx="14" cy="13" r="1.2" fill="#c8baa6" />
+              </pattern>
+              <pattern id="patLid" width="36" height="36" patternUnits="userSpaceOnUse">
+                <rect width="36" height="36" fill="#f3ead9" />
+                <circle cx="10" cy="10" r="4.2" fill="#b65d70" />
+                <circle cx="15" cy="13" r="3.1" fill="#d795a1" />
+                <circle cx="8" cy="18" r="3.1" fill="#d795a1" />
+                <path d="M20 24 Q26 18 30 11" fill="none" stroke="#7f966e" stroke-width="1.5" />
+                <circle cx="24" cy="26" r="3.2" fill="#8ba078" />
+              </pattern>
+            </defs>
+
+            <rect width="760" height="560" fill="#fffdfb" />
+
+            <!-- far interior surfaces -->
+            <g id="interiorFar">
+              <polygon
+                id="innerFarLeft"
+                fill="url(#patInner)"
+                stroke="#b3a79d"
+                stroke-width="1.5"
+              />
+              <image
+                id="imgInnerFarLeft"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon
+                id="shadeInnerFarLeft"
+                fill="url(#shadeInner)"
+                opacity=".40"
+                style="display: none"
+              />
+
+              <polygon
+                id="innerFarRight"
+                fill="url(#patInner)"
+                stroke="#b3a79d"
+                stroke-width="1.5"
+              />
+              <image
+                id="imgInnerFarRight"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon
+                id="shadeInnerFarRight"
+                fill="url(#shadeInner)"
+                opacity=".40"
+                style="display: none"
+              />
+
+              <polygon id="innerBottom" fill="url(#patInner)" stroke="#b3a79d" stroke-width="1.5" />
+              <image
+                id="imgInnerBottom"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon
+                id="shadeInnerBottom"
+                fill="url(#shadeInner)"
+                opacity=".22"
+                style="display: none"
+              />
+            </g>
+
+            <!-- near interior surfaces -->
+            <g id="interiorNear">
+              <polygon
+                id="innerNearLeft"
+                fill="url(#patInner)"
+                stroke="#b3a79d"
+                stroke-width="1.5"
+              />
+              <image
+                id="imgInnerNearLeft"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon
+                id="shadeInnerNearLeft"
+                fill="url(#shadeL)"
+                opacity=".28"
+                style="display: none"
+              />
+
+              <polygon
+                id="innerNearRight"
+                fill="url(#patInner)"
+                stroke="#b3a79d"
+                stroke-width="1.5"
+              />
+              <image
+                id="imgInnerNearRight"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon
+                id="shadeInnerNearRight"
+                fill="url(#shadeR)"
+                opacity=".28"
+                style="display: none"
+              />
+            </g>
+
+            <!-- visible outer faces: left + right -->
+            <g id="outerLayer">
+              <polygon id="outerLeft" fill="url(#patOuter)" stroke="#8f6069" stroke-width="1.8" />
+              <image
+                id="imgOuterLeft"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon id="shadeOuterLeft" fill="url(#shadeL)" style="display: none" />
+
+              <polygon id="outerRight" fill="url(#patOuter)" stroke="#8b5b65" stroke-width="1.8" />
+              <image
+                id="imgOuterRight"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon id="shadeOuterRight" fill="url(#shadeR)" style="display: none" />
+            </g>
+
+            <!-- thin top rims connect outer and inner surfaces -->
+            <g id="rimLayer">
+              <polygon
+                id="rimLeft"
+                fill="#b67582"
+                fill-opacity=".75"
+                stroke="#80555e"
+                stroke-width="1"
+              />
+              <polygon
+                id="rimRight"
+                fill="#bd7a87"
+                fill-opacity=".75"
+                stroke="#80555e"
+                stroke-width="1"
+              />
+              <polygon
+                id="rimFarLeft"
+                fill="#d4a1aa"
+                fill-opacity=".75"
+                stroke="#8b6870"
+                stroke-width="1"
+              />
+              <polygon
+                id="rimFarRight"
+                fill="#d4a1aa"
+                fill-opacity=".75"
+                stroke="#8b6870"
+                stroke-width="1"
+              />
+            </g>
+
+            <!-- 内部だけの接触影。床と壁の境界にごく薄く入れる -->
+            <g id="innerSeams" pointer-events="none" style="display: none">
+              <polyline
+                id="seamFar"
+                fill="none"
+                stroke="#000"
+                stroke-opacity=".12"
+                stroke-width="4"
+                stroke-linecap="round"
+                filter="url(#innerSoft)"
+              />
+              <polyline
+                id="seamLeft"
+                fill="none"
+                stroke="#000"
+                stroke-opacity=".10"
+                stroke-width="3.2"
+                stroke-linecap="round"
+                filter="url(#innerSoft)"
+              />
+              <polyline
+                id="seamRight"
+                fill="none"
+                stroke="#000"
+                stroke-opacity=".10"
+                stroke-width="3.2"
+                stroke-linecap="round"
+                filter="url(#innerSoft)"
+              />
+              <polyline
+                id="seamNear"
+                fill="none"
+                stroke="#000"
+                stroke-opacity=".07"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                filter="url(#innerSoft)"
+              />
+            </g>
+
+            <!-- lid -->
+            <g id="lidLayer">
+              <polygon id="lidLeft" fill="url(#patOuter)" stroke="#8e6068" stroke-width="1.8" />
+              <image
+                id="imgLidLeft"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon id="shadeLidLeft" fill="url(#shadeL)" opacity=".74" style="display: none" />
+
+              <polygon id="lidRight" fill="url(#patOuter)" stroke="#895b64" stroke-width="1.8" />
+              <image
+                id="imgLidRight"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon id="shadeLidRight" fill="url(#shadeR)" opacity=".78" style="display: none" />
+
+              <polygon id="lidTop" fill="url(#patLid)" stroke="#9f8877" stroke-width="1.8" />
+              <image
+                id="imgLidTop"
+                width="1"
+                height="1"
+                preserveAspectRatio="none"
+                style="display: none"
+              />
+              <polygon id="lidTopLight" fill="#fff" opacity=".055" style="display: none" />
+            </g>
+
+            <g id="cutBadge" opacity="0" pointer-events="none">
+              <rect
+                x="274"
+                y="498"
+                width="212"
+                height="36"
+                rx="18"
+                fill="#fff"
+                fill-opacity=".94"
+                stroke="#d6a3b0"
+              />
+              <text x="299" y="521" font-size="16" font-weight="700" fill="#8b3046">
+                手前2面を半透明
+              </text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label>ふたの布</label><input id="upLid" type="file" accept="image/*" />
+          </div>
+          <div class="control">
+            <label>外側の布</label><input id="upOuter" type="file" accept="image/*" />
+          </div>
+          <div class="control">
+            <label>内側の布</label><input id="upInner" type="file" accept="image/*" />
+          </div>
+        </div>
+
+        <div class="note">
+          <span class="badge">正方形1種類</span>
+          <span class="badge">SVG固定アングル</span>
+          <span class="badge">壁厚 約2%</span><br />
+          影はすべて外し、形状と輪郭だけで立体感を出す版です。
+          「蓋なし」では手前壁を完全に不透明にし、「手前透過」のときだけ透過表示します。
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /*
+  3D座標:
+    x: 手前角から右奥へ
+    y: 手前角から左奥へ
+    z: 上方向
+
+  正方形の手前角を中央に置いた固定平行投影。
+  x/y を左右対称にすることで、左右の外側面を同時に見せる。
+*/
+      const P = {
+        cx: 380,
+        cy: 438,
+        Xx: 210,
+        Xy: -73,
+        Yx: -210,
+        Yy: -73,
+        Zx: 0,
+        Zy: -218,
+      };
+
+      function project([x, y, z]) {
+        return [P.cx + P.Xx * x + P.Yx * y + P.Zx * z, P.cy + P.Xy * x + P.Yy * y + P.Zy * z];
+      }
+      function points(q) {
+        return q
+          .map(project)
+          .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+          .join(" ");
+      }
+      function setPoly(id, q) {
+        document.getElementById(id).setAttribute("points", points(q));
+      }
+      function affine(q) {
+        // q = image's top-left, top-right, bottom-right, bottom-left
+        const p0 = project(q[0]),
+          p1 = project(q[1]),
+          p3 = project(q[3]);
+        return `matrix(${p1[0] - p0[0]} ${p1[1] - p0[1]} ${p3[0] - p0[0]} ${p3[1] - p0[1]} ${p0[0]} ${p0[1]})`;
+      }
+      function setImageTransform(id, q) {
+        document.getElementById(id).setAttribute("transform", affine(q));
+      }
+
+      // proportions
+      const W = 1,
+        D = 1,
+        H = 0.56;
+      const wall = 0.02; // 前版 .075 → 約1/4
+      const floorZ = 0.022;
+      const x0 = wall,
+        x1 = W - wall,
+        y0 = wall,
+        y1 = D - wall;
+
+      // visible outer faces
+      // left screen face = x=0 plane
+      const outerLeft = [
+        [0, D, H],
+        [0, 0, H],
+        [0, 0, 0],
+        [0, D, 0],
+      ];
+      // right screen face = y=0 plane
+      const outerRight = [
+        [0, 0, H],
+        [W, 0, H],
+        [W, 0, 0],
+        [0, 0, 0],
+      ];
+
+      // interior far walls
+      const innerFarLeft = [
+        [x0, y1, H],
+        [x1, y1, H],
+        [x1, y1, floorZ],
+        [x0, y1, floorZ],
+      ];
+      const innerFarRight = [
+        // 画像の左→右が画面上でも中央→右になる順序に統一
+        [x1, y1, H],
+        [x1, y0, H],
+        [x1, y0, floorZ],
+        [x1, y1, floorZ],
+      ];
+
+      // interior near walls
+      const innerNearLeft = [
+        [x0, y1, H],
+        [x0, y0, H],
+        [x0, y0, floorZ],
+        [x0, y1, floorZ],
+      ];
+      const innerNearRight = [
+        [x0, y0, H],
+        [x1, y0, H],
+        [x1, y0, floorZ],
+        [x0, y0, floorZ],
+      ];
+
+      // bottom shares exact lower vertices with all four inner walls
+      const innerBottom = [
+        [x0, y0, floorZ],
+        [x1, y0, floorZ],
+        [x1, y1, floorZ],
+        [x0, y1, floorZ],
+      ];
+
+      // thin top rims between outer and inner surfaces
+      const rimLeft = [
+        [0, D, H],
+        [0, 0, H],
+        [x0, y0, H],
+        [x0, y1, H],
+      ];
+      const rimRight = [
+        [0, 0, H],
+        [W, 0, H],
+        [x1, y0, H],
+        [x0, y0, H],
+      ];
+      const rimFarLeft = [
+        [0, D, H],
+        [W, D, H],
+        [x1, y1, H],
+        [x0, y1, H],
+      ];
+      const rimFarRight = [
+        [W, 0, H],
+        [W, D, H],
+        [x1, y1, H],
+        [x1, y0, H],
+      ];
+
+      // lid
+      const over = 0.014;
+      const lx0 = -over,
+        lx1 = W + over,
+        ly0 = -over,
+        ly1 = D + over;
+      const lidBottom = H + 0.01;
+      const lidTopZ = H + 0.052;
+
+      const lidLeft = [
+        [lx0, ly1, lidTopZ],
+        [lx0, ly0, lidTopZ],
+        [lx0, ly0, lidBottom],
+        [lx0, ly1, lidBottom],
+      ];
+      const lidRight = [
+        [lx0, ly0, lidTopZ],
+        [lx1, ly0, lidTopZ],
+        [lx1, ly0, lidBottom],
+        [lx0, ly0, lidBottom],
+      ];
+      const lidTop = [
+        [lx0, ly1, lidTopZ],
+        [lx0, ly0, lidTopZ],
+        [lx1, ly0, lidTopZ],
+        [lx1, ly1, lidTopZ],
+      ];
+
+      // geometry
+      [
+        ["innerFarLeft", innerFarLeft],
+        ["shadeInnerFarLeft", innerFarLeft],
+        ["innerFarRight", innerFarRight],
+        ["shadeInnerFarRight", innerFarRight],
+        ["innerBottom", innerBottom],
+        ["shadeInnerBottom", innerBottom],
+        ["innerNearLeft", innerNearLeft],
+        ["shadeInnerNearLeft", innerNearLeft],
+        ["innerNearRight", innerNearRight],
+        ["shadeInnerNearRight", innerNearRight],
+        ["outerLeft", outerLeft],
+        ["shadeOuterLeft", outerLeft],
+        ["outerRight", outerRight],
+        ["shadeOuterRight", outerRight],
+        ["rimLeft", rimLeft],
+        ["rimRight", rimRight],
+        ["rimFarLeft", rimFarLeft],
+        ["rimFarRight", rimFarRight],
+        ["lidLeft", lidLeft],
+        ["shadeLidLeft", lidLeft],
+        ["lidRight", lidRight],
+        ["shadeLidRight", lidRight],
+        ["lidTop", lidTop],
+        ["lidTopLight", lidTop],
+      ].forEach(([id, q]) => setPoly(id, q));
+
+      function setLine(id, arr) {
+        document.getElementById(id).setAttribute(
+          "points",
+          arr
+            .map(project)
+            .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+            .join(" "),
+        );
+      }
+      // 内底と内壁が接する4辺だけに影を置く
+      setLine("seamFar", [
+        [x0, y1, floorZ],
+        [x1, y1, floorZ],
+      ]);
+      setLine("seamLeft", [
+        [x0, y0, floorZ],
+        [x0, y1, floorZ],
+      ]);
+      setLine("seamRight", [
+        [x1, y0, floorZ],
+        [x1, y1, floorZ],
+      ]);
+      setLine("seamNear", [
+        [x0, y0, floorZ],
+        [x1, y0, floorZ],
+      ]);
+
+      // photo transforms
+      [
+        ["imgInnerFarLeft", innerFarLeft],
+        ["imgInnerFarRight", innerFarRight],
+        ["imgInnerBottom", innerBottom],
+        ["imgInnerNearLeft", innerNearLeft],
+        ["imgInnerNearRight", innerNearRight],
+        ["imgOuterLeft", outerLeft],
+        ["imgOuterRight", outerRight],
+        ["imgLidLeft", lidLeft],
+        ["imgLidRight", lidRight],
+        ["imgLidTop", lidTop],
+      ].forEach(([id, q]) => setImageTransform(id, q));
+
+      const lidLayer = document.getElementById("lidLayer");
+      const interiorFar = document.getElementById("interiorFar");
+      const interiorNear = document.getElementById("interiorNear");
+      const rimLayer = document.getElementById("rimLayer");
+      const cutBadge = document.getElementById("cutBadge");
+      const innerSeams = document.getElementById("innerSeams");
+
+      const nearOuterIds = [
+        "outerLeft",
+        "shadeOuterLeft",
+        "imgOuterLeft",
+        "outerRight",
+        "shadeOuterRight",
+        "imgOuterRight",
+      ];
+      const nearInnerIds = [
+        "innerNearLeft",
+        "shadeInnerNearLeft",
+        "imgInnerNearLeft",
+        "innerNearRight",
+        "shadeInnerNearRight",
+        "imgInnerNearRight",
+      ];
+
+      const buttons = {
+        closed: document.getElementById("bClosed"),
+        open: document.getElementById("bOpen"),
+        cut: document.getElementById("bCut"),
+      };
+
+      function opacity(ids, value) {
+        ids.forEach((id) => (document.getElementById(id).style.opacity = value));
+      }
+      function setMode(mode) {
+        Object.values(buttons).forEach((b) => b.classList.remove("active"));
+        buttons[mode].classList.add("active");
+
+        lidLayer.style.display = "";
+        interiorFar.style.display = "";
+        interiorNear.style.display = "none";
+        rimLayer.style.display = "";
+        innerSeams.style.display = "none";
+        opacity(nearOuterIds, "1");
+        opacity(nearInnerIds, "1");
+        cutBadge.style.opacity = "0";
+
+        if (mode === "closed") {
+          interiorFar.style.display = "none";
+          interiorNear.style.display = "none";
+          rimLayer.style.display = "none";
+        } else if (mode === "open") {
+          // 蓋なし：手前の外壁は完全に不透明。
+          // 手前壁の内側面は視点上ほぼ見えないため描画しない。
+          lidLayer.style.display = "none";
+          interiorNear.style.display = "none";
+        } else {
+          // 手前透過：このモードだけ手前2面を透過。
+          lidLayer.style.display = "none";
+          interiorNear.style.display = "";
+          opacity(["outerLeft", "imgOuterLeft", "outerRight", "imgOuterRight"], ".16");
+          opacity(
+            ["innerNearLeft", "imgInnerNearLeft", "innerNearRight", "imgInnerNearRight"],
+            ".10",
+          );
+          cutBadge.style.opacity = "1";
+        }
+      }
+      buttons.closed.onclick = () => setMode("closed");
+      buttons.open.onclick = () => setMode("open");
+      buttons.cut.onclick = () => setMode("cut");
+
+      function upload(inputId, ids) {
+        document.getElementById(inputId).addEventListener("change", (e) => {
+          const f = e.target.files?.[0];
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = () => {
+            ids.forEach((id) => {
+              const el = document.getElementById(id);
+              el.setAttribute("href", r.result);
+              el.style.display = "";
+            });
+          };
+          r.readAsDataURL(f);
+        });
+      }
+
+      upload("upLid", ["imgLidLeft", "imgLidRight", "imgLidTop"]);
+      upload("upOuter", ["imgOuterLeft", "imgOuterRight"]);
+      upload("upInner", [
+        "imgInnerFarLeft",
+        "imgInnerFarRight",
+        "imgInnerNearLeft",
+        "imgInnerNearRight",
+        "imgInnerBottom",
+      ]);
+
+      setMode("closed");
+    </script>
+  </body>
+</html>
