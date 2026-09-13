@@ -252,7 +252,7 @@ export const parseCounts = (value: string): Map<string, number> => {
 /**
  * 名前ごとの累計から前回コミットとの増分をとり、増分のあったものだけを残す。
  */
-const increases = (total: Map<string, number>, base: Map<string, number>): Map<string, number> =>
+const diffCounts = (total: Map<string, number>, base: Map<string, number>): Map<string, number> =>
   new Map(
     [...total]
       .map(([name, value]): [string, number] => [name, diff(value, base.get(name) ?? 0)])
@@ -387,8 +387,11 @@ const activityTrailers = (
 
   const requests = amount(activity.requests, "Agent-Session-Api-Requests");
   const toolCalls = amount(activity.toolCalls, "Agent-Session-Tool-Calls");
-  const tools = increases(activity.tools, parseCounts(baseTrailer("Agent-Session-Tool-Breakdown")));
-  const skills = increases(activity.skills, parseCounts(baseTrailer("Agent-Session-Skills")));
+  const tools = diffCounts(
+    activity.tools,
+    parseCounts(baseTrailer("Agent-Session-Tool-Breakdown")),
+  );
+  const skills = diffCounts(activity.skills, parseCounts(baseTrailer("Agent-Session-Skills")));
 
   return {
     context: { "Agent-Context-Tokens": activity.contextTokens },
@@ -480,7 +483,7 @@ const main = (): void => {
   const activity = activityTrailers(readActivity(sessionId), amount, baseTrailer);
 
   const tokens = modelTokens(usage.modelBreakdowns);
-  const tokenIncreases = increases(tokens, parseCounts(baseTrailer("Agent-Session-Model-Tokens")));
+  const tokenIncreases = diffCounts(tokens, parseCounts(baseTrailer("Agent-Session-Model-Tokens")));
   const models = byValueDesc(tokenIncreases).map(([name]) => name);
 
   // --if-exists replace により amend でも既存トレーラーが二重にならない。
