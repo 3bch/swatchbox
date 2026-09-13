@@ -5,7 +5,14 @@
 // 純粋関数として切り出せる部分だけを対象にする。
 import { describe, expect, test } from "vitest";
 
-import { byValueDesc, diff, formatCounts, parseCounts, round3 } from "#scripts/commit-trailer.ts";
+import {
+  byValueDesc,
+  diff,
+  diffCounts,
+  formatCounts,
+  parseCounts,
+  round3,
+} from "#scripts/commit-trailer.ts";
 
 describe(round3, () => {
   test("小数第 4 位が切り上がる", () => {
@@ -157,5 +164,38 @@ describe(parseCounts, () => {
 
   test("負の値は 0 になる", () => {
     expect(parseCounts("Read=-5")).toEqual(new Map([["Read", 0]]));
+  });
+});
+
+describe(diffCounts, () => {
+  test("増えた名前は基準を差し引いた増分になる", () => {
+    expect(diffCounts(new Map([["Read", 5]]), new Map([["Read", 2]]))).toEqual(
+      new Map([["Read", 3]]),
+    );
+  });
+
+  test("基準に無い名前は累計がそのまま増分になる", () => {
+    expect(diffCounts(new Map([["Read", 5]]), new Map())).toEqual(new Map([["Read", 5]]));
+  });
+
+  // parseCounts が壊れた値を 0 に寄せたときに通る経路。
+  // 基準に無い場合と違い、`?? 0` を経ずに 0 が引かれる。
+  test("基準の値が 0 の名前は累計がそのまま増分になる", () => {
+    expect(diffCounts(new Map([["Read", 5]]), new Map([["Read", 0]]))).toEqual(
+      new Map([["Read", 5]]),
+    );
+  });
+
+  test("変化の無い名前は落ちる", () => {
+    expect(diffCounts(new Map([["Read", 5]]), new Map([["Read", 5]]))).toEqual(new Map());
+  });
+
+  test("減っている名前は落ちる", () => {
+    expect(diffCounts(new Map([["Read", 2]]), new Map([["Read", 5]]))).toEqual(new Map());
+  });
+
+  // 起点は total 側。基準にしか無い名前を拾わないことの確認。
+  test("基準にだけある名前は結果に現れない", () => {
+    expect(diffCounts(new Map(), new Map([["Read", 5]]))).toEqual(new Map());
   });
 });
