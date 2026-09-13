@@ -181,7 +181,6 @@
     // categories で自動的に有効になるもの（correctness / suspicious / perf）は
     // unicorn / react と同様ここに書かない。型情報を使うルールも categories で
     // 有効になるため、前提は options.typeAware: true だけになる。
-    // 選定の詳細は oxlint-rules-research.md を参照
 
     // --- 型安全性の穴を塞ぐ --- //
     "typescript/no-explicit-any": "error",
@@ -279,7 +278,6 @@
     // （旧名で実装されているものを含む）。
     // うち correctness / suspicious / perf の 23 件は categories により自動で有効になるため、
     // ここに書くのは pedantic / style / restriction / nursery のものだけとする。
-    // 選定の詳細は oxlint-rules-research.md を参照
 
     // --- バグ・間違いやすい API の検出 --- //
     "unicorn/error-message": "error",
@@ -418,7 +416,6 @@
     // --- react --- //
     // categories で自動的に有効になるものは unicorn と同様にここへ書かない
     // （exhaustive-deps / no-array-index-key / purity / immutability など）。
-    // 選定の詳細は oxlint-rules-research.md を参照
 
     // React 17 以降は不要なルールなので OFF
     "react/react-in-jsx-scope": "off",
