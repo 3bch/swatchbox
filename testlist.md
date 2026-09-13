@@ -33,8 +33,8 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
 
 ## 現在地
 
-- 対象: increases
-- 次: 1. テスト項目の再検討
+- 対象: diffCounts
+- 次: 2. Red
 
 ## 実装側の設計変更
 
@@ -55,12 +55,12 @@ Kent Beck の TDD に従い、関数ひとつを 1 サイクルとして進め�
       `buildTrailers(...)` として純粋関数にし、`baseTrailer` を引数で受け取る。
       git / ccusage の呼び出しは `main()` に残す
 - [x] **E. 値の並び順を出力側に寄せる**
-      `increases` はソートせず `Map` を返し、value 降順の比較は `byValueDesc`
+      `diffCounts` はソートせず `Map` を返し、value 降順の比較は `byValueDesc`
       として切り出す。`formatCounts` は `Map` を受けて内部で `byValueDesc` を
       通し、`Agent-Model` 側も同じ関数を使う。session 区画の並びが出現順から
       value 降順に変わるため、挙動を変えない A〜D とは違い仕様変更にあたる。
       byValueDesc の新設は先行サイクルで行い、呼び出し元の切り替え
-      （`increases` の戻りと `Agent-Model`）は formatCounts のサイクルで行う
+      （`diffCounts` の戻りと `Agent-Model`）は formatCounts のサイクルで行う
 - [x] **F. `parseCounts` の壊れた値の扱いを揃える**
       `Number(...) || 0` から漏れている非有限値と負の値を 0 にする。
       関数上のコメントが既に宣言している方針に実装を合わせるもので、
@@ -121,15 +121,18 @@ round3 の責務ではないことを、非有限な値を素通しすること�
 「値が壊れていた要素は捨てる」という方針から漏れていたため、
 `Number.isFinite(parsed) && 0 <= parsed` の判定に置き換えた（設計変更 F）。
 
-### increases
+### diffCounts
 
 戻りは `Map`。並び順は byValueDesc の責務（設計変更 E）。
+旧名は `increases`。値ひとつの `diff` を Map に広げたものとして改名した。
 
-- [ ] 増分のあるものだけが残る
+- [ ] 増えた名前は基準を差し引いた増分になる
 - [ ] 基準に無い名前は累計がそのまま増分になる
+- [ ] 基準の値が 0 の名前は累計がそのまま増分になる
+      （parseCounts が壊れた値を 0 に寄せたときに通る経路）
+- [ ] 変化の無い名前は落ちる
 - [ ] 減っている名前は落ちる（diff が 0 のため）
-- [ ] 基準に壊れた値があった名前は、0 を基準として累計がそのまま増分になる
-      （parseCounts が 0 に寄せた値が通る経路）
+- [ ] 基準にだけある名前は結果に現れない（空の total でも兼ねる）
 
 ### modelTokens
 
