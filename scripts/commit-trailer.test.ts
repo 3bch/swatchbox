@@ -179,7 +179,6 @@ describe(diffCounts, () => {
   });
 
   // parseCounts が壊れた値を 0 に寄せたときに通る経路。
-  // 基準に無い場合と違い、`?? 0` を経ずに 0 が引かれる。
   test("基準の値が 0 の名前は累計がそのまま増分になる", () => {
     expect(diffCounts(new Map([["Read", 5]]), new Map([["Read", 0]]))).toEqual(
       new Map([["Read", 5]]),
