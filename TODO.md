@@ -21,4 +21,4 @@
 - [ ] 実装に入る前の準備
     - [ ] スタイリング手段を決める（Tailwind CSS など）
     - [ ] shadcn/ui を導入する
-    - [ ] 公開先、アクセスを身内に限るか、布の保存先（IndexedDB か Supabase か）を決める
+    - [x] 公開先、アクセスを身内に限るか、布の保存先（IndexedDB か Supabase か）を決める
