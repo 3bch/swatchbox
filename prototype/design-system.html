@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>swatchbox デザインシステム検討</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap"
+    />
+    <style>
+      /* ---------- 検討用ページの枠（候補の切り替えに影響されない部分） ---------- */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #dcdcdc;
+        color: #222;
+        font-family: system-ui, sans-serif;
+      }
+      .tool {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #1c1c1c;
+        color: #eee;
+        padding: 8px 16px;
+      }
+      .tool-inner {
+        max-width: 1200px;
+        margin: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 24px;
+      }
+      .tool-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .tool-group > span {
+        flex: none;
+        width: 5em;
+        color: #aaa;
+        font-size: 12px;
+      }
+      .seg {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .seg button {
+        flex: none;
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid #4a4a4a;
+        border-radius: 8px;
+        background: #2b2b2b;
+        color: #ddd;
+        font:
+          13px system-ui,
+          sans-serif;
+        cursor: pointer;
+      }
+      .seg button[aria-pressed="true"] {
+        border-color: #fff;
+        background: #fff;
+        color: #111;
+      }
+      .page {
+        max-width: 1280px;
+        margin: auto;
+        padding: 8px 16px 64px;
+      }
+      .intro {
+        margin: 12px auto 0;
+        max-width: 840px;
+        color: #555;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .sec-title {
+        max-width: 840px;
+        margin: 40px auto 16px;
+        color: #333;
+        font:
+          700 15px system-ui,
+          sans-serif;
+      }
+      .screens {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 40px 32px;
+      }
+      .screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: min(100%, 390px);
+      }
+      .screen-label {
+        color: #444;
+        font:
+          600 13px system-ui,
+          sans-serif;
+      }
+      .phone {
+        position: relative;
+        width: 100%;
+        height: 780px;
+        overflow: hidden;
+        border-radius: 28px;
+        box-shadow:
+          0 0 0 6px #1c1c1c,
+          0 12px 40px rgba(0, 0, 0, 0.25);
+      }
+      .panel {
+        max-width: 840px;
+        margin: 0 auto;
+        padding: 20px 16px 24px;
+        border-radius: 16px;
+      }
+
+      /* ---------- 決まった値 ---------- */
+      .ds {
+        /* --stage は箱の絵の背景。shadcn/ui にない独自の変数 */
+        --background: #fdf6f8;
+        --stage: #f2f2f3;
+        --foreground: #241b1f;
+        --card: #ffffff;
+        --card-foreground: #241b1f;
+        --popover: #ffffff;
+        --popover-foreground: #241b1f;
+        --primary: #b3186e;
+        --primary-foreground: #ffffff;
+        --secondary: #fae3f0;
+        --secondary-foreground: #7f1450;
+        --muted: #f8edf1;
+        --muted-foreground: #74606a;
+        --accent: #fae3f0;
+        --accent-foreground: #7f1450;
+        --destructive: var(--primary);
+        --border: #efdfe5;
+        --input: #e5d0d8;
+        --ring: #b3186e;
+        --font: "Zen Maru Gothic", system-ui, sans-serif;
+        --radius: 10px;
+        --radius-sm: calc(var(--radius) - 4px);
+        --radius-md: calc(var(--radius) - 2px);
+        --radius-lg: var(--radius);
+        --radius-xl: calc(var(--radius) + 4px);
+      }
+      .ds .phone,
+      .ds .panel {
+        background: var(--background);
+        color: var(--foreground);
+        font-family: var(--font);
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      /* ---------- 部品 ---------- */
+      .ic {
+        width: 20px;
+        height: 20px;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 48px;
+        padding: 0 20px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-md);
+        font: inherit;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+      .btn-secondary {
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+      }
+      .btn-outline {
+        border-color: var(--input);
+        background: var(--background);
+        color: var(--foreground);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--foreground);
+      }
+      .btn-destructive {
+        background: var(--destructive);
+        color: #ffffff;
+      }
+      .btn-destructive-outline {
+        border-color: color-mix(in srgb, var(--destructive) 40%, transparent);
+        background: transparent;
+        color: var(--destructive);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .btn-icon {
+        width: 48px;
+        padding: 0;
+      }
+      .btn-block {
+        width: 100%;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 4px;
+        border-radius: var(--radius-lg);
+        background: var(--muted);
+      }
+      .tab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 40px;
+        border: 0;
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--muted-foreground);
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .tab[aria-selected="true"] {
+        background: var(--card);
+        color: var(--foreground);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .input {
+        width: 100%;
+        height: 48px;
+        padding: 0 12px;
+        border: 1px solid var(--input);
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--foreground);
+        font: inherit;
+      }
+      .input:focus,
+      .input.is-focus {
+        border-color: var(--ring);
+        outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent);
+      }
+      .label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+      .desc {
+        margin: 0;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+      }
+      .pad {
+        padding-inline: 16px;
+      }
+      .thumb svg,
+      .swatch-img svg,
+      .dialog-img svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* ---------- 画面の見本 ---------- */
+      .scr {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .stage {
+        margin: 16px 16px 0;
+        padding: 16px 8px;
+        border-radius: var(--radius-xl);
+        background: var(--stage);
+      }
+      .stage svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .stage.is-bleed {
+        margin: 0;
+        padding: 24px 16px 32px;
+        border-radius: 0;
+      }
+      .stage.is-top-tabs {
+        padding-top: 16px;
+      }
+      .stage .tabs {
+        background: rgba(0, 0, 0, 0.06);
+      }
+      .stage svg + .tabs,
+      .stage .tabs + svg {
+        margin-top: 8px;
+      }
+      .tabs-sm .tab {
+        height: 36px;
+      }
+      .below {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        margin-top: -16px;
+        padding-top: 16px;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        background: var(--background);
+      }
+      .split-bottom {
+        display: flex;
+        flex-direction: column;
+      }
+      .thumb {
+        flex: none;
+        width: 48px;
+        height: 48px;
+        overflow: hidden;
+        border-radius: var(--radius-md);
+      }
+      .thumb-sm {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+      }
+      .thumb-empty {
+        border: 1px dashed var(--input);
+        background: var(--muted);
+      }
+      .place-tabs .tab {
+        height: 48px;
+      }
+      .place-tabs .thumb-empty {
+        border-color: var(--muted-foreground);
+        background: transparent;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        align-items: start;
+        gap: 16px 12px;
+        padding: 16px;
+        overflow: auto;
+      }
+      .swatch {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .swatch-img {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        padding: 0;
+        overflow: hidden;
+        border: 0;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+      }
+      .swatch.is-selected .swatch-img {
+        outline: 3px solid var(--ring);
+        outline-offset: 2px;
+      }
+      .check {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+      .check .ic {
+        width: 16px;
+        height: 16px;
+        stroke-width: 3;
+      }
+      .more {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 0;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--card) 90%, transparent);
+        color: var(--foreground);
+        cursor: pointer;
+      }
+      .swatch-name {
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+      .new {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        aspect-ratio: 1;
+        border: 1.5px dashed color-mix(in srgb, var(--secondary-foreground) 35%, transparent);
+        border-radius: var(--radius-md);
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .dialog {
+        position: absolute;
+        top: 50%;
+        right: 16px;
+        left: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        background: var(--popover);
+        color: var(--popover-foreground);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transform: translateY(-50%);
+      }
+      .dialog-img {
+        align-self: center;
+        width: 128px;
+        height: 128px;
+        overflow: hidden;
+        border-radius: var(--radius-md);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .sep {
+        height: 1px;
+        background: var(--border);
+      }
+      .register {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: #111;
+      }
+      .register-hint {
+        margin: 0;
+        padding: 20px 16px 12px;
+        color: #fff;
+        font-size: 0.875rem;
+        text-align: center;
+      }
+      .photo {
+        position: relative;
+        flex: 1;
+        overflow: hidden;
+      }
+      .photo > svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .crop {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 72%;
+        aspect-ratio: 1;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+        transform: translate(-50%, -50%);
+      }
+      .crop i {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border: 0 solid #fff;
+      }
+      .crop i:nth-child(1) {
+        top: -5px;
+        left: -5px;
+        border-width: 5px 0 0 5px;
+      }
+      .crop i:nth-child(2) {
+        top: -5px;
+        right: -5px;
+        border-width: 5px 5px 0 0;
+      }
+      .crop i:nth-child(3) {
+        bottom: -5px;
+        left: -5px;
+        border-width: 0 0 5px 5px;
+      }
+      .crop i:nth-child(4) {
+        right: -5px;
+        bottom: -5px;
+        border-width: 0 5px 5px 0;
+      }
+      .register-bar {
+        padding: 16px 16px 24px;
+        background: var(--background);
+      }
+
+      /* ---------- 部品・色・文字・余白の一覧 ---------- */
+      .demo-title {
+        margin: 24px 0 12px;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .demo-title:first-child {
+        margin-top: 0;
+      }
+      .demo-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .demo-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 360px;
+      }
+      .tokens {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+      }
+      .token {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        font-size: 0.75rem;
+        line-height: 1.4;
+      }
+      .token-chip {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+      }
+      .token code {
+        color: var(--muted-foreground);
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+      }
+      th,
+      td {
+        padding: 8px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        color: var(--muted-foreground);
+        font-weight: 500;
+      }
+      .sample {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+      }
+      .ok {
+        color: #1b7a3a;
+      }
+      .ng {
+        color: #b3261e;
+        font-weight: 700;
+      }
+      .type-row {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        align-items: baseline;
+        gap: 4px 16px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .type-row p {
+        margin: 0;
+        min-width: 0;
+      }
+      .type-meta {
+        color: var(--muted-foreground);
+        font-size: 0.75rem;
+      }
+      .space-row {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        align-items: center;
+        gap: 16px;
+        padding: 6px 0;
+      }
+      .space-bar {
+        height: 16px;
+        border-radius: 2px;
+        background: var(--primary);
+      }
+      @media (max-width: 520px) {
+        .type-row {
+          grid-template-columns: 1fr;
+        }
+        .space-row {
+          grid-template-columns: 110px 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 布の柄とアイコン -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <pattern id="pat-floral" width="40" height="40" patternUnits="userSpaceOnUse">
+          <rect width="40" height="40" fill="#f6efe3" />
+          <g fill="#d9577a">
+            <circle cx="10" cy="8" r="3" />
+            <circle cx="14" cy="11" r="3" />
+            <circle cx="10" cy="14" r="3" />
+            <circle cx="6" cy="11" r="3" />
+          </g>
+          <circle cx="10" cy="11" r="1.6" fill="#f3c969" />
+          <path d="M16 18q6 2 8 8" fill="none" stroke="#6f9a6a" stroke-width="1.6" />
+          <ellipse cx="25" cy="24" rx="3" ry="1.8" fill="#6f9a6a" transform="rotate(40 25 24)" />
+          <g fill="#e89aac">
+            <circle cx="30" cy="31" r="2.2" />
+            <circle cx="33" cy="33" r="2.2" />
+            <circle cx="30" cy="35" r="2.2" />
+            <circle cx="27" cy="33" r="2.2" />
+          </g>
+          <circle cx="30" cy="33" r="1.1" fill="#fff4d6" />
+        </pattern>
+        <pattern id="pat-gingham" width="20" height="20" patternUnits="userSpaceOnUse">
+          <rect width="20" height="20" fill="#fbfbf8" />
+          <rect width="10" height="20" fill="#4f7cc0" fill-opacity=".45" />
+          <rect width="20" height="10" fill="#4f7cc0" fill-opacity=".45" />
+        </pattern>
+        <pattern id="pat-stripe" width="16" height="16" patternUnits="userSpaceOnUse">
+          <rect width="16" height="16" fill="#eef3ea" />
+          <rect width="6" height="16" fill="#5d8f5c" />
+          <rect x="10" width="1.5" height="16" fill="#5d8f5c" fill-opacity=".5" />
+        </pattern>
+        <pattern id="pat-dots" width="18" height="18" patternUnits="userSpaceOnUse">
+          <rect width="18" height="18" fill="#e6d7bf" />
+          <circle cx="4.5" cy="4.5" r="2.2" fill="#fffaf0" />
+          <circle cx="13.5" cy="13.5" r="2.2" fill="#fffaf0" />
+        </pattern>
+        <pattern id="pat-navy" width="24" height="24" patternUnits="userSpaceOnUse">
+          <rect width="24" height="24" fill="#22335a" />
+          <path d="M12 3 21 12 12 21 3 12Z" fill="none" stroke="#e6d4a8" stroke-width="1.4" />
+          <circle cx="12" cy="12" r="1.6" fill="#e6d4a8" />
+        </pattern>
+        <pattern id="pat-mimosa" width="22" height="22" patternUnits="userSpaceOnUse">
+          <rect width="22" height="22" fill="#efd06f" />
+          <circle cx="6" cy="6" r="2.4" fill="#fff3c4" />
+          <circle cx="8.5" cy="8.5" r="1.8" fill="#fff3c4" />
+          <circle cx="16" cy="15" r="2.4" fill="#c7962a" />
+          <circle cx="14" cy="17.5" r="1.6" fill="#c7962a" />
+          <path d="M2 20q4-3 8-2" fill="none" stroke="#7d8f4e" stroke-width="1.2" />
+        </pattern>
+        <pattern id="pat-pink" width="12" height="12" patternUnits="userSpaceOnUse">
+          <rect width="12" height="12" fill="#d6a0ad" />
+          <path d="M0 3H12M0 9H12" stroke="#fff" stroke-opacity=".14" />
+          <path d="M3 0V12M9 0V12" stroke="#000" stroke-opacity=".04" />
+        </pattern>
+        <pattern id="pat-black" width="20" height="20" patternUnits="userSpaceOnUse">
+          <rect width="20" height="20" fill="#2a2522" />
+          <circle cx="5" cy="5" r="2.2" fill="#e27a96" />
+          <circle cx="5" cy="5" r=".9" fill="#f7e7b4" />
+          <circle cx="15" cy="14" r="1.6" fill="#f2ede4" />
+          <circle cx="12" cy="17" r="1" fill="#7aa37a" />
+        </pattern>
+      </defs>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path
+          d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+        />
+      </symbol>
+    </svg>
+
+    <header class="tool">
+      <div class="tool-inner">
+        <div class="tool-group">
+          <span>レイアウト</span>
+          <div class="seg" data-key="layout">
+            <button data-value="3a">3a 表示状態は箱の上</button>
+            <button data-value="3b">3b 表示状態は箱の下</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page">
+      <p class="intro">
+        色・文字・角丸は決まった値で固定し、レイアウトの案だけを切り替えて見比べるページです。
+        画面ごとの細かなデザインは別に決めます。 CSS 変数の名前は shadcn/ui に揃えています。
+      </p>
+
+      <main class="ds" id="ds">
+        <h2 class="sec-title">画面の見本</h2>
+        <div class="screens" id="screens"></div>
+
+        <h2 class="sec-title">部品</h2>
+        <div class="panel">
+          <h3 class="demo-title">ボタン</h3>
+          <div class="demo-wrap">
+            <button class="btn btn-primary">保存</button>
+            <button class="btn btn-secondary">控えめ</button>
+            <button class="btn btn-outline">キャンセル</button>
+            <button class="btn btn-ghost">ゴースト</button>
+            <button class="btn btn-destructive">
+              <svg class="ic"><use href="#i-trash" /></svg>削除
+            </button>
+            <button class="btn btn-destructive-outline">
+              <svg class="ic"><use href="#i-trash" /></svg>この布を削除
+            </button>
+            <button class="btn btn-primary" disabled>使えない</button>
+            <button class="btn btn-ghost btn-icon" aria-label="閉じる">
+              <svg class="ic"><use href="#i-x" /></svg>
+            </button>
+          </div>
+
+          <h3 class="demo-title">入力欄</h3>
+          <div class="demo-stack">
+            <div>
+              <label class="label">名前</label>
+              <input class="input" value="9/14 15:30" />
+            </div>
+            <div>
+              <label class="label">名前（入力中）</label>
+              <input class="input is-focus" value="母の日の箱" />
+            </div>
+          </div>
+
+          <h3 class="demo-title">切り替え</h3>
+          <div class="demo-stack">
+            <div class="tabs" role="tablist">
+              <button class="tab" role="tab" aria-selected="true">閉めた状態</button>
+              <button class="tab" role="tab" aria-selected="false">外した状態</button>
+              <button class="tab" role="tab" aria-selected="false">透かした状態</button>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="sec-title">色</h2>
+        <div class="panel">
+          <h3 class="demo-title">CSS 変数</h3>
+          <div class="tokens" id="tokens"></div>
+
+          <h3 class="demo-title">コントラスト比（文字は 4.5 以上、枠線は 3 以上）</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>用途</th>
+                  <th>見本</th>
+                  <th>比</th>
+                </tr>
+              </thead>
+              <tbody id="contrast"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <h2 class="sec-title">文字（Zen Maru Gothic）</h2>
+        <div class="panel">
+          <div class="type-row">
+            <span class="type-meta">2xl ・ 24px ・ 700</span>
+            <p style="font-size: 1.5rem; font-weight: 700; line-height: 1.33">
+              布を選ぶ 9/14 15:30
+            </p>
+          </div>
+          <div class="type-row">
+            <span class="type-meta">xl ・ 20px ・ 700</span>
+            <p style="font-size: 1.25rem; font-weight: 700; line-height: 1.4">
+              布を選ぶ 9/14 15:30
+            </p>
+          </div>
+          <div class="type-row">
+            <span class="type-meta">lg ・ 18px ・ 700<br />シートとダイアログの見出し</span>
+            <p style="font-size: 1.125rem; font-weight: 700; line-height: 1.4">
+              布を選ぶ 9/14 15:30
+            </p>
+          </div>
+          <div class="type-row">
+            <span class="type-meta">base ・ 16px ・ 500<br />ボタン、布の名前</span>
+            <p style="font-weight: 500">保存して割り当てる 9/14 15:30</p>
+          </div>
+          <div class="type-row">
+            <span class="type-meta">base ・ 16px ・ 400<br />本文</span>
+            <p>蓋・外側・内側に布を割り当てて、完成イメージを確かめます。</p>
+          </div>
+          <div class="type-row">
+            <span class="type-meta">sm ・ 14px ・ 400<br />補足、一覧の布の名前</span>
+            <p style="font-size: 0.875rem">使っている場所は未選択に戻ります。9/14 15:30</p>
+          </div>
+          <div class="type-row">
+            <span class="type-meta">xs ・ 12px ・ 400<br />ラベル</span>
+            <p style="font-size: 0.75rem">蓋 ・ 外側 ・ 内側 ・ 未選択</p>
+          </div>
+        </div>
+
+        <h2 class="sec-title">余白（Tailwind の 4px 刻み）</h2>
+        <div class="panel" id="spacing"></div>
+      </main>
+    </div>
+
+    <script>
+      // ---------- データ ----------
+      const FABRICS = [
+        { id: "black", name: "9/15 20:10" },
+        { id: "floral", name: "9/14 15:30" },
+        { id: "gingham", name: "9/12 11:05" },
+        { id: "stripe", name: "9/10 18:42" },
+        { id: "dots", name: "9/8 13:20" },
+        { id: "navy", name: "9/3 10:00" },
+        { id: "mimosa", name: "8/30 16:45" },
+        { id: "pink", name: "8/28 12:12" },
+      ];
+      const byId = Object.fromEntries(FABRICS.map((f) => [f.id, f]));
+      const ASSIGN = { lid: "floral", outer: "gingham", inner: null };
+      const PLACES = [
+        { key: "lid", label: "蓋" },
+        { key: "outer", label: "外側" },
+        { key: "inner", label: "内側" },
+      ];
+      const MODES = [
+        { key: "closed", label: "閉めた状態" },
+        { key: "open", label: "外した状態" },
+        { key: "cut", label: "透かした状態" },
+      ];
+      const state = { layout: "3a", mode: "closed" };
+
+      // ---------- 箱の絵（prototype と同じ投影） ----------
+      const VIEWBOX = "140 130 480 335";
+      const project = ([x, y, z]) => [380 + 210 * x - 210 * y, 438 - 73 * x - 73 * y - 218 * z];
+      const pts = (q) =>
+        q
+          .map(project)
+          .map(([a, b]) => `${a.toFixed(1)},${b.toFixed(1)}`)
+          .join(" ");
+
+      const H = 0.56;
+      const w = 0.02;
+      const fz = 0.022;
+      const [x0, x1, y0, y1] = [w, 1 - w, w, 1 - w];
+      const o = 0.014;
+      const [lx0, lx1, ly0, ly1] = [-o, 1 + o, -o, 1 + o];
+      const [lb, lt] = [H + 0.01, H + 0.052];
+      const G = {
+        outerLeft: [
+          [0, 1, H],
+          [0, 0, H],
+          [0, 0, 0],
+          [0, 1, 0],
+        ],
+        outerRight: [
+          [0, 0, H],
+          [1, 0, H],
+          [1, 0, 0],
+          [0, 0, 0],
+        ],
+        farLeft: [
+          [x0, y1, H],
+          [x1, y1, H],
+          [x1, y1, fz],
+          [x0, y1, fz],
+        ],
+        farRight: [
+          [x1, y1, H],
+          [x1, y0, H],
+          [x1, y0, fz],
+          [x1, y1, fz],
+        ],
+        nearLeft: [
+          [x0, y1, H],
+          [x0, y0, H],
+          [x0, y0, fz],
+          [x0, y1, fz],
+        ],
+        nearRight: [
+          [x0, y0, H],
+          [x1, y0, H],
+          [x1, y0, fz],
+          [x0, y0, fz],
+        ],
+        bottom: [
+          [x0, y0, fz],
+          [x1, y0, fz],
+          [x1, y1, fz],
+          [x0, y1, fz],
+        ],
+        rims: [
+          [
+            [0, 1, H],
+            [0, 0, H],
+            [x0, y0, H],
+            [x0, y1, H],
+          ],
+          [
+            [0, 0, H],
+            [1, 0, H],
+            [x1, y0, H],
+            [x0, y0, H],
+          ],
+          [
+            [0, 1, H],
+            [1, 1, H],
+            [x1, y1, H],
+            [x0, y1, H],
+          ],
+          [
+            [1, 0, H],
+            [1, 1, H],
+            [x1, y1, H],
+            [x1, y0, H],
+          ],
+        ],
+        lidLeft: [
+          [lx0, ly1, lt],
+          [lx0, ly0, lt],
+          [lx0, ly0, lb],
+          [lx0, ly1, lb],
+        ],
+        lidRight: [
+          [lx0, ly0, lt],
+          [lx1, ly0, lt],
+          [lx1, ly0, lb],
+          [lx0, ly0, lb],
+        ],
+        lidTop: [
+          [lx0, ly1, lt],
+          [lx0, ly0, lt],
+          [lx1, ly0, lt],
+          [lx1, ly1, lt],
+        ],
+      };
+
+      const fillOf = (id) => (id ? `url(#pat-${id})` : "#d4d4d4");
+      const face = (q, fill, shade = 0, extra = "") =>
+        `<g ${extra}><polygon points="${pts(q)}" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width="1.5" stroke-linejoin="round"/>` +
+        (shade ? `<polygon points="${pts(q)}" fill="#000" fill-opacity="${shade}"/>` : "") +
+        "</g>";
+
+      /** 表示状態に合わせて、箱の絵の SVG 要素を組み立てる。 */
+      function boxSvg(mode) {
+        const [lid, out, inn] = [fillOf(ASSIGN.lid), fillOf(ASSIGN.outer), fillOf(ASSIGN.inner)];
+        let s = `<ellipse cx="380" cy="440" rx="230" ry="18" fill="#000" fill-opacity=".06"/>`;
+        if (mode !== "closed") {
+          s += face(G.farLeft, inn, 0.1) + face(G.farRight, inn, 0.04) + face(G.bottom, inn, 0.14);
+        }
+        if (mode === "cut") {
+          s += face(G.nearLeft, inn, 0, 'opacity=".1"') + face(G.nearRight, inn, 0, 'opacity=".1"');
+        }
+        const dim = mode === "cut" ? 'opacity=".16"' : "";
+        s += face(G.outerLeft, out, 0.08, dim) + face(G.outerRight, out, 0.18, dim);
+        if (mode !== "closed") s += G.rims.map((q) => face(q, out, 0.05)).join("");
+        if (mode === "closed") {
+          s += face(G.lidLeft, lid, 0.08) + face(G.lidRight, lid, 0.18) + face(G.lidTop, lid);
+        }
+        return s;
+      }
+
+      // ---------- 画面の見本 ----------
+      const ic = (name) => `<svg class="ic" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+      const thumb = (id) =>
+        `<svg viewBox="0 0 60 60" preserveAspectRatio="xMidYMid slice"><rect width="60" height="60" fill="url(#pat-${id})"/></svg>`;
+      const tabs = (items, active, attr, cls = "") =>
+        `<div class="tabs ${cls}" role="tablist">${items
+          .map(
+            (i) =>
+              `<button class="tab" role="tab" aria-selected="${i.key === active}" ${attr}="${i.key}">${i.label}</button>`,
+          )
+          .join("")}</div>`;
+      const box = (kind) => `<svg class="box" viewBox="${VIEWBOX}" data-box="${kind}"></svg>`;
+      /** 蓋・外側・内側の切り替えを、割り当てた布の小さな画像つきで組み立てる。 */
+      function placeTabs() {
+        const items = PLACES.map((p) => {
+          const id = ASSIGN[p.key];
+          return `<button class="tab" role="tab" aria-selected="${p.key === "lid"}" data-place="${p.key}">
+            <span class="thumb thumb-sm ${id ? "" : "thumb-empty"}">${id ? thumb(id) : ""}</span>${p.label}
+          </button>`;
+        }).join("");
+        return `<div class="tabs place-tabs" role="tablist">${items}</div>`;
+      }
+
+      /** 布の一覧の、布 1 枚ぶんのマスを組み立てる。 */
+      function swatch(f) {
+        const sel = ASSIGN.lid === f.id;
+        return `<div class="swatch ${sel ? "is-selected" : ""}">
+          <button class="swatch-img" type="button" aria-label="${f.name}">
+            ${thumb(f.id)}${sel ? `<span class="check">${ic("check")}</span>` : ""}
+          </button>
+          <button class="more" type="button" aria-label="編集">${ic("more")}</button>
+          <span class="swatch-name">${f.name}</span>
+        </div>`;
+      }
+
+      const fabricGrid = () => `<div class="grid">
+        <button class="new" type="button">${ic("plus")}<span>新しい布</span></button>
+        ${FABRICS.map(swatch).join("")}
+      </div>`;
+
+      /** 完成イメージ画面を、布の一覧つきの 1 画面として組み立てる。 */
+      function screenSplit() {
+        const top = state.layout === "3a";
+        const modeTabs = tabs(MODES, state.mode, "data-mode", top ? "tabs-sm" : "");
+        return `<div class="scr">
+          <div class="stage is-bleed ${top ? "is-top-tabs" : ""}">
+            ${top ? modeTabs + box("preview") : box("preview") + modeTabs}
+          </div>
+          <div class="below split-bottom">
+            <div class="pad">${placeTabs()}</div>
+            ${fabricGrid()}
+          </div>
+        </div>`;
+      }
+
+      const screenEdit = () => `${screenSplit()}
+        <div class="scrim"></div>
+        <div class="dialog" role="dialog">
+          <h3 class="title">布を編集</h3>
+          <div class="dialog-img">${thumb("floral")}</div>
+          <div>
+            <label class="label">名前</label>
+            <input class="input" value="9/14 15:30" />
+          </div>
+          <div class="row">
+            <button class="btn btn-outline">キャンセル</button>
+            <button class="btn btn-primary">保存</button>
+          </div>
+          <div class="sep"></div>
+          <button class="btn btn-destructive-outline btn-block">${ic("trash")}この布を削除</button>
+        </div>`;
+
+      const screenConfirm = () => `${screenSplit()}
+        <div class="scrim"></div>
+        <div class="dialog" role="alertdialog">
+          <div>
+            <h3 class="title">9/14 15:30 を削除しますか？</h3>
+            <p class="desc">使っている場所は未選択に戻ります。</p>
+          </div>
+          <div class="row">
+            <button class="btn btn-outline">キャンセル</button>
+            <button class="btn btn-destructive">${ic("trash")}削除</button>
+          </div>
+        </div>`;
+
+      const screenRegister = () => `<div class="register">
+        <p class="register-hint">布として使う範囲を、枠で囲んでください</p>
+        <div class="photo">
+          <svg viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice">
+            <rect width="200" height="300" fill="#8b7765"/>
+            <g transform="rotate(-6 100 150)"><rect x="-20" y="30" width="240" height="240" fill="url(#pat-floral)"/></g>
+          </svg>
+          <div class="crop"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="register-bar row">
+          <button class="btn btn-outline">キャンセル</button>
+          <button class="btn btn-primary">保存して割り当てる</button>
+        </div>
+      </div>`;
+
+      /** 選んでいるレイアウトで見せる画面の一覧を返す。 */
+      function screens() {
+        const rest = [
+          ["3 布編集ダイアログ", screenEdit],
+          ["3' 削除の確認", screenConfirm],
+          ["4 布登録画面", screenRegister],
+        ];
+        return [["1 完成イメージ画面（布の一覧つき）", screenSplit], ...rest];
+      }
+
+      /** 画面の見本をすべて描き直す。 */
+      function renderScreens() {
+        document.getElementById("screens").innerHTML = screens()
+          .map(
+            ([label, fn]) =>
+              `<div class="screen"><div class="screen-label">${label}</div><div class="phone">${fn()}</div></div>`,
+          )
+          .join("");
+        renderBoxes();
+      }
+
+      /** 画面の見本の中にある箱の絵を描き直す。 */
+      function renderBoxes() {
+        document.querySelectorAll("svg.box").forEach((svg) => {
+          svg.innerHTML = boxSvg(svg.dataset.box === "preview" ? state.mode : "closed");
+        });
+      }
+
+      // ---------- 色の一覧とコントラスト比 ----------
+      const TOKENS = [
+        "background",
+        "stage",
+        "foreground",
+        "card",
+        "primary",
+        "primary-foreground",
+        "secondary",
+        "secondary-foreground",
+        "muted",
+        "muted-foreground",
+        "accent",
+        "accent-foreground",
+        "destructive",
+        "border",
+        "input",
+        "ring",
+      ];
+      const PAIRS = [
+        ["本文", "foreground", "background", 4.5],
+        ["補足", "muted-foreground", "background", 4.5],
+        ["補足（薄い塗りの上）", "muted-foreground", "muted", 4.5],
+        ["ボタン", "primary-foreground", "primary", 4.5],
+        ["控えめなボタン", "secondary-foreground", "secondary", 4.5],
+        ["選択中", "accent-foreground", "accent", 4.5],
+        ["削除の文字", "destructive", "background", 4.5],
+        ["選択の枠", "ring", "background", 3],
+        ["選択の枠（箱の背景の上）", "ring", "stage", 3],
+      ];
+
+      const ds = document.getElementById("ds");
+      const cssVar = (name) => getComputedStyle(ds).getPropertyValue(`--${name}`).trim();
+
+      /** 16 進の色から相対輝度を求める。 */
+      function luminance(hex) {
+        const h = hex.replace("#", "");
+        const [r, g, b] = [0, 2, 4].map((i) => {
+          const v = parseInt(h.slice(i, i + 2), 16) / 255;
+          return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      /** 2 色のコントラスト比を求める。 */
+      function contrast(a, b) {
+        const [hi, lo] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      /** 色の一覧とコントラスト比の表を描く。 */
+      function renderColors() {
+        document.getElementById("tokens").innerHTML = TOKENS.map(
+          (t) => `<div class="token">
+            <span class="token-chip" style="background: var(--${t})"></span>
+            <span><b>--${t}</b><br /><code>${cssVar(t)}</code></span>
+          </div>`,
+        ).join("");
+        document.getElementById("contrast").innerHTML = PAIRS.map(([label, fg, bg, min]) => {
+          const [f, b] = [cssVar(fg), cssVar(bg)];
+          const r = contrast(f, b);
+          const sample = label.startsWith("選択の枠")
+            ? `<span class="sample" style="outline: 3px solid ${f}; background: ${b}">枠</span>`
+            : `<span class="sample" style="color: ${f}; background: ${b}">あいう 9/14</span>`;
+          return `<tr><td>${label}</td><td>${sample}</td><td class="${r >= min ? "ok" : "ng"}">${r.toFixed(2)}</td></tr>`;
+        }).join("");
+      }
+
+      /** 余白の段階の一覧を描く。 */
+      function renderSpacing() {
+        const rows = [
+          [1, 4, ""],
+          [2, 8, "部品どうしの間"],
+          [3, 12, "行の中の間"],
+          [4, 16, "画面の左右の余白"],
+          [6, 24, "ダイアログの内側"],
+          [8, 32, ""],
+          [12, 48, "タップ領域の最小"],
+        ];
+        document.getElementById("spacing").innerHTML = rows
+          .map(
+            ([n, px, note]) => `<div class="space-row">
+              <span class="type-meta">${n} ・ ${px}px${note ? `<br />${note}` : ""}</span>
+              <div class="space-bar" style="width: ${px}px"></div>
+            </div>`,
+          )
+          .join("");
+      }
+
+      // ---------- レイアウトの切り替え ----------
+      /** 選んでいるレイアウトをページに反映する。 */
+      function apply() {
+        document.querySelectorAll(".seg").forEach((seg) => {
+          seg.querySelectorAll("button").forEach((b) => {
+            b.setAttribute("aria-pressed", String(state[seg.dataset.key] === b.dataset.value));
+          });
+        });
+        renderScreens();
+        try {
+          localStorage.setItem("swatchbox-ds-4", JSON.stringify({ layout: state.layout }));
+        } catch {}
+      }
+
+      document.querySelectorAll(".seg").forEach((seg) => {
+        seg.addEventListener("click", (e) => {
+          const b = e.target.closest("button");
+          if (!b) return;
+          state[seg.dataset.key] = b.dataset.value;
+          apply();
+        });
+      });
+
+      document.getElementById("screens").addEventListener("click", (e) => {
+        const tab = e.target.closest(".tab");
+        if (!tab) return;
+        tab.parentElement.querySelectorAll(".tab").forEach((t) => {
+          t.setAttribute("aria-selected", String(t === tab));
+        });
+        if (tab.dataset.mode) {
+          state.mode = tab.dataset.mode;
+          renderBoxes();
+        }
+      });
+
+      try {
+        Object.assign(state, JSON.parse(localStorage.getItem("swatchbox-ds-4") || "{}"));
+      } catch {}
+      renderColors();
+      renderSpacing();
+      apply();
+    </script>
+  </body>
+</html>
