@@ -13,9 +13,25 @@ Tailwind CSS v4 を使う。
 
 shadcn/ui を Base UI で使う。
 
-- ベースカラーと CSS 変数の使用有無は、初期化した後で変えられない
+- スタイルは、初期化した後で変えにくい
+    - スタイルは CSS だけでなく、部品のコード（余白、高さ、角丸）を書き換える
+    - ベースカラーとアイコンは、`migrate` で後から変えられる
 - そのため、デザインシステムを決めてから導入する
 - 使う部品は、画面ごとのデザインを決めてから選ぶ
+
+### 初期化の方式
+
+CLI の init で、スタイルを Maia にする。
+
+```sh
+pnpm dlx shadcn@latest init --template vite --base base --preset maia
+```
+
+- Maia は角が丸く、余白がゆったりしていて、このアプリの雰囲気に近い
+- 公式サイトの create でもプリセットを作れるが、使わない
+    - 色とフォントはデザインシステムの値で上書きするので、選ぶ意味が薄い
+    - アイコンは初期値（lucide の見込み）でよく、変えるなら `migrate icons` を使う
+- Maia の値に揃えられるものは揃え、上書きする量を減らす
 
 ### 生成コードの扱い
 
@@ -39,3 +55,4 @@ shadcn/ui を Base UI で使う。
 | Base UI と React 19           | `@base-ui/react` 1.8.0 の peer 依存が React 19 を含む                  | なし                                      |
 | `#/` のエイリアス             | shadcn 4.7.0 以降は `components.json` の aliases に `#` 始まりを書ける | 拡張子なしの `#/lib/utils` が解決できるか |
 | Vite 向けの公式手順           | `@/*` の paths と alias を足す手順になっている                         | `#/` を使うので、この手順は飛ばす         |
+| `--preset maia`               | `--defaults` の説明に `--preset=nova` とある                           | `maia` をそのまま渡せるか                 |
