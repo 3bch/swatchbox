@@ -22,58 +22,6 @@
         color: #222;
         font-family: system-ui, sans-serif;
       }
-      .tool {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background: #1c1c1c;
-        color: #eee;
-        padding: 8px 16px;
-      }
-      .tool-inner {
-        max-width: 1200px;
-        margin: auto;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px 24px;
-      }
-      .tool-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 0;
-        max-width: 100%;
-      }
-      .tool-group > span {
-        flex: none;
-        width: 5em;
-        color: #aaa;
-        font-size: 12px;
-      }
-      .seg {
-        display: flex;
-        gap: 4px;
-        overflow-x: auto;
-        scrollbar-width: none;
-      }
-      .seg button {
-        flex: none;
-        height: 32px;
-        padding: 0 10px;
-        border: 1px solid #4a4a4a;
-        border-radius: 8px;
-        background: #2b2b2b;
-        color: #ddd;
-        font:
-          13px system-ui,
-          sans-serif;
-        cursor: pointer;
-      }
-      .seg button[aria-pressed="true"] {
-        border-color: #fff;
-        background: #fff;
-        color: #111;
-      }
       .page {
         max-width: 1280px;
         margin: auto;
@@ -133,25 +81,25 @@
       /* ---------- 決まった値 ---------- */
       .ds {
         /* --stage は箱の絵の背景。shadcn/ui にない独自の変数 */
-        --background: #fdf6f8;
-        --stage: #f2f2f3;
-        --foreground: #241b1f;
-        --card: #ffffff;
-        --card-foreground: #241b1f;
-        --popover: #ffffff;
-        --popover-foreground: #241b1f;
-        --primary: #b3186e;
-        --primary-foreground: #ffffff;
-        --secondary: #fae3f0;
-        --secondary-foreground: #7f1450;
-        --muted: #f8edf1;
-        --muted-foreground: #74606a;
-        --accent: #fae3f0;
-        --accent-foreground: #7f1450;
+        --background: oklch(0.979 0.008 357.8);
+        --stage: oklch(0.961 0.0013 286.4);
+        --foreground: oklch(0.235 0.016 349.9);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.235 0.016 349.9);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.235 0.016 349.9);
+        --primary: oklch(0.51 0.197 353.9);
+        --primary-foreground: oklch(1 0 0);
+        --secondary: oklch(0.938 0.03 342.6);
+        --secondary-foreground: oklch(0.402 0.15 352.4);
+        --muted: oklch(0.956 0.013 353.1);
+        --muted-foreground: oklch(0.512 0.03 346.6);
+        --accent: oklch(0.938 0.03 342.6);
+        --accent-foreground: oklch(0.402 0.15 352.4);
         --destructive: var(--primary);
-        --border: #efdfe5;
-        --input: #e5d0d8;
-        --ring: #b3186e;
+        --border: oklch(0.918 0.019 352.7);
+        --input: oklch(0.76 0.034 352.5);
+        --ring: oklch(0.51 0.197 353.9);
         --font: "Zen Maru Gothic", system-ui, sans-serif;
         --radius: 10px;
         --radius-sm: calc(var(--radius) - 4px);
@@ -212,7 +160,7 @@
       }
       .btn-destructive {
         background: var(--destructive);
-        color: #ffffff;
+        color: var(--primary-foreground);
       }
       .btn-destructive-outline {
         border-color: color-mix(in srgb, var(--destructive) 40%, transparent);
@@ -276,7 +224,7 @@
       }
       .label {
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         font-size: 0.875rem;
         font-weight: 500;
       }
@@ -310,33 +258,17 @@
         flex-direction: column;
       }
       .stage {
-        margin: 16px 16px 0;
-        padding: 16px 8px;
-        border-radius: var(--radius-xl);
+        padding: 16px 16px 32px;
         background: var(--stage);
       }
       .stage svg {
         display: block;
         width: 100%;
         height: auto;
-      }
-      .stage.is-bleed {
-        margin: 0;
-        padding: 24px 16px 32px;
-        border-radius: 0;
-      }
-      .stage.is-top-tabs {
-        padding-top: 16px;
+        margin-top: 8px;
       }
       .stage .tabs {
         background: rgba(0, 0, 0, 0.06);
-      }
-      .stage svg + .tabs,
-      .stage .tabs + svg {
-        margin-top: 8px;
-      }
-      .tabs-sm .tab {
-        height: 36px;
       }
       .below {
         position: relative;
@@ -386,7 +318,7 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
       }
       .swatch-img {
         position: relative;
@@ -405,8 +337,8 @@
       }
       .check {
         position: absolute;
-        top: 6px;
-        left: 6px;
+        top: 8px;
+        left: 8px;
         display: grid;
         place-items: center;
         width: 24px;
@@ -434,6 +366,12 @@
         background: color-mix(in srgb, var(--card) 90%, transparent);
         color: var(--foreground);
         cursor: pointer;
+      }
+      /* 見た目は 32px のまま、タップできる範囲を 44px に広げる */
+      .more::before {
+        content: "";
+        position: absolute;
+        inset: -6px;
       }
       .swatch-name {
         font-size: 0.875rem;
@@ -500,7 +438,7 @@
       }
       .register-hint {
         margin: 0;
-        padding: 20px 16px 12px;
+        padding: 16px 16px 12px;
         color: #fff;
         font-size: 0.875rem;
         text-align: center;
@@ -585,7 +523,7 @@
       .token {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         min-width: 0;
         font-size: 0.75rem;
         line-height: 1.4;
@@ -594,7 +532,7 @@
         flex: none;
         width: 40px;
         height: 40px;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
       }
       .token code {
@@ -621,8 +559,8 @@
       }
       .sample {
         display: inline-block;
-        padding: 2px 10px;
-        border-radius: 6px;
+        padding: 4px 12px;
+        border-radius: var(--radius-sm);
         font-weight: 500;
       }
       .ok {
@@ -637,7 +575,7 @@
         grid-template-columns: 140px 1fr;
         align-items: baseline;
         gap: 4px 16px;
-        padding: 10px 0;
+        padding: 12px 0;
         border-bottom: 1px solid var(--border);
       }
       .type-row p {
@@ -653,12 +591,16 @@
         grid-template-columns: 140px 1fr;
         align-items: center;
         gap: 16px;
-        padding: 6px 0;
+        padding: 8px 0;
       }
       .space-bar {
         height: 16px;
         border-radius: 2px;
         background: var(--primary);
+      }
+      .size-box {
+        border-radius: var(--radius-sm);
+        background: var(--secondary);
       }
       @media (max-width: 520px) {
         .type-row {
@@ -750,21 +692,9 @@
       </symbol>
     </svg>
 
-    <header class="tool">
-      <div class="tool-inner">
-        <div class="tool-group">
-          <span>レイアウト</span>
-          <div class="seg" data-key="layout">
-            <button data-value="3a">3a 表示状態は箱の上</button>
-            <button data-value="3b">3b 表示状態は箱の下</button>
-          </div>
-        </div>
-      </div>
-    </header>
-
     <div class="page">
       <p class="intro">
-        色・文字・角丸は決まった値で固定し、レイアウトの案だけを切り替えて見比べるページです。
+        色・文字・角丸・余白の決まった値を、画面の見本と部品で確かめるページです。
         画面ごとの細かなデザインは別に決めます。 CSS 変数の名前は shadcn/ui に揃えています。
       </p>
 
@@ -833,21 +763,8 @@
             </table>
           </div>
         </div>
-
         <h2 class="sec-title">文字（Zen Maru Gothic）</h2>
         <div class="panel">
-          <div class="type-row">
-            <span class="type-meta">2xl ・ 24px ・ 700</span>
-            <p style="font-size: 1.5rem; font-weight: 700; line-height: 1.33">
-              布を選ぶ 9/14 15:30
-            </p>
-          </div>
-          <div class="type-row">
-            <span class="type-meta">xl ・ 20px ・ 700</span>
-            <p style="font-size: 1.25rem; font-weight: 700; line-height: 1.4">
-              布を選ぶ 9/14 15:30
-            </p>
-          </div>
           <div class="type-row">
             <span class="type-meta">lg ・ 18px ・ 700<br />シートとダイアログの見出し</span>
             <p style="font-size: 1.125rem; font-weight: 700; line-height: 1.4">
@@ -867,13 +784,19 @@
             <p style="font-size: 0.875rem">使っている場所は未選択に戻ります。9/14 15:30</p>
           </div>
           <div class="type-row">
-            <span class="type-meta">xs ・ 12px ・ 400<br />ラベル</span>
+            <span class="type-meta">xs ・ 12px ・ 400<br />まだ使っていない</span>
             <p style="font-size: 0.75rem">蓋 ・ 外側 ・ 内側 ・ 未選択</p>
           </div>
         </div>
 
+        <h2 class="sec-title">角丸</h2>
+        <div class="panel" id="radius"></div>
+
         <h2 class="sec-title">余白（Tailwind の 4px 刻み）</h2>
         <div class="panel" id="spacing"></div>
+
+        <h2 class="sec-title">高さ</h2>
+        <div class="panel" id="heights"></div>
       </main>
     </div>
 
@@ -901,7 +824,7 @@
         { key: "open", label: "外した状態" },
         { key: "cut", label: "透かした状態" },
       ];
-      const state = { layout: "3a", mode: "closed" };
+      const state = { mode: "closed" };
 
       // ---------- 箱の絵（prototype と同じ投影） ----------
       const VIEWBOX = "140 130 480 335";
@@ -1075,11 +998,9 @@
 
       /** 完成イメージ画面を、布の一覧つきの 1 画面として組み立てる。 */
       function screenSplit() {
-        const top = state.layout === "3a";
-        const modeTabs = tabs(MODES, state.mode, "data-mode", top ? "tabs-sm" : "");
         return `<div class="scr">
-          <div class="stage is-bleed ${top ? "is-top-tabs" : ""}">
-            ${top ? modeTabs + box("preview") : box("preview") + modeTabs}
+          <div class="stage">
+            ${tabs(MODES, state.mode, "data-mode")}${box("preview")}
           </div>
           <div class="below split-bottom">
             <div class="pad">${placeTabs()}</div>
@@ -1133,24 +1054,20 @@
         </div>
       </div>`;
 
-      /** 選んでいるレイアウトで見せる画面の一覧を返す。 */
-      function screens() {
-        const rest = [
-          ["3 布編集ダイアログ", screenEdit],
-          ["3' 削除の確認", screenConfirm],
-          ["4 布登録画面", screenRegister],
-        ];
-        return [["1 完成イメージ画面（布の一覧つき）", screenSplit], ...rest];
-      }
+      /** 見せる画面の一覧。 */
+      const SCREENS = [
+        ["1 完成イメージ画面（布の一覧つき）", screenSplit],
+        ["3 布編集ダイアログ", screenEdit],
+        ["3' 削除の確認", screenConfirm],
+        ["4 布登録画面", screenRegister],
+      ];
 
       /** 画面の見本をすべて描き直す。 */
       function renderScreens() {
-        document.getElementById("screens").innerHTML = screens()
-          .map(
-            ([label, fn]) =>
-              `<div class="screen"><div class="screen-label">${label}</div><div class="phone">${fn()}</div></div>`,
-          )
-          .join("");
+        document.getElementById("screens").innerHTML = SCREENS.map(
+          ([label, fn]) =>
+            `<div class="screen"><div class="screen-label">${label}</div><div class="phone">${fn()}</div></div>`,
+        ).join("");
         renderBoxes();
       }
 
@@ -1167,6 +1084,7 @@
         "stage",
         "foreground",
         "card",
+        "popover",
         "primary",
         "primary-foreground",
         "secondary",
@@ -1184,25 +1102,33 @@
         ["本文", "foreground", "background", 4.5],
         ["補足", "muted-foreground", "background", 4.5],
         ["補足（薄い塗りの上）", "muted-foreground", "muted", 4.5],
+        ["補足（ダイアログの上）", "muted-foreground", "popover", 4.5],
         ["ボタン", "primary-foreground", "primary", 4.5],
         ["控えめなボタン", "secondary-foreground", "secondary", 4.5],
         ["選択中", "accent-foreground", "accent", 4.5],
         ["削除の文字", "destructive", "background", 4.5],
         ["選択の枠", "ring", "background", 3],
         ["選択の枠（箱の背景の上）", "ring", "stage", 3],
+        ["入力欄の枠", "input", "background", 3],
+        ["入力欄の枠（ダイアログの上）", "input", "popover", 3],
       ];
 
       const ds = document.getElementById("ds");
       const cssVar = (name) => getComputedStyle(ds).getPropertyValue(`--${name}`).trim();
 
-      /** 16 進の色から相対輝度を求める。 */
-      function luminance(hex) {
-        const h = hex.replace("#", "");
-        const [r, g, b] = [0, 2, 4].map((i) => {
-          const v = parseInt(h.slice(i, i + 2), 16) / 255;
-          return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-        });
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      /** oklch で書いた色から相対輝度を求める。 */
+      function luminance(color) {
+        const [L, C, H] = color.match(/[\d.]+/g).map(Number);
+        const a = C * Math.cos((H * Math.PI) / 180);
+        const b = C * Math.sin((H * Math.PI) / 180);
+        const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+        const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+        const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+        const clamp = (v) => Math.min(1, Math.max(0, v));
+        const r = clamp(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s);
+        const g = clamp(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s);
+        const bl = clamp(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
       }
 
       /** 2 色のコントラスト比を求める。 */
@@ -1222,56 +1148,69 @@
         document.getElementById("contrast").innerHTML = PAIRS.map(([label, fg, bg, min]) => {
           const [f, b] = [cssVar(fg), cssVar(bg)];
           const r = contrast(f, b);
-          const sample = label.startsWith("選択の枠")
+          const sample = label.includes("の枠")
             ? `<span class="sample" style="outline: 3px solid ${f}; background: ${b}">枠</span>`
             : `<span class="sample" style="color: ${f}; background: ${b}">あいう 9/14</span>`;
           return `<tr><td>${label}</td><td>${sample}</td><td class="${r >= min ? "ok" : "ng"}">${r.toFixed(2)}</td></tr>`;
         }).join("");
       }
 
+      /** 角丸の段階の一覧を描く。 */
+      function renderRadius() {
+        const rows = [
+          ["sm", "6px", "var(--radius-sm)", "小さな布の画像"],
+          ["md", "8px", "var(--radius-md)", "ボタン、入力欄、タブのボタン、布の画像"],
+          ["lg", "10px", "var(--radius-lg)", "ダイアログ、タブの外枠"],
+          ["xl", "14px", "var(--radius-xl)", "一覧の上の角"],
+          ["full", "999px", "999px", "チェック、…ボタン"],
+        ];
+        document.getElementById("radius").innerHTML = rows
+          .map(
+            ([n, px, v, note]) => `<div class="space-row">
+              <span class="type-meta">${n} ・ ${px}<br />${note}</span>
+              <div class="size-box" style="width: 48px; height: 48px; border-radius: ${v}"></div>
+            </div>`,
+          )
+          .join("");
+      }
+
       /** 余白の段階の一覧を描く。 */
       function renderSpacing() {
         const rows = [
-          [1, 4, ""],
-          [2, 8, "部品どうしの間"],
-          [3, 12, "行の中の間"],
-          [4, 16, "画面の左右の余白"],
+          [1, 4, "タブの外枠の内側、タブのボタンの間"],
+          [2, 8, "アイコンと文字、並んだボタン、ラベルと入力欄、布の画像と名前"],
+          [3, 12, "布の一覧の横の間、入力欄の内側"],
+          [4, 16, "画面の左右、布の一覧の縦の間、ダイアログの中の要素の間"],
+          [5, 20, "ボタンの左右の内側"],
           [6, 24, "ダイアログの内側"],
-          [8, 32, ""],
-          [12, 48, "タップ領域の最小"],
+          [8, 32, "箱の絵の下"],
         ];
         document.getElementById("spacing").innerHTML = rows
           .map(
             ([n, px, note]) => `<div class="space-row">
-              <span class="type-meta">${n} ・ ${px}px${note ? `<br />${note}` : ""}</span>
+              <span class="type-meta">${n} ・ ${px}px<br />${note}</span>
               <div class="space-bar" style="width: ${px}px"></div>
             </div>`,
           )
           .join("");
       }
 
-      // ---------- レイアウトの切り替え ----------
-      /** 選んでいるレイアウトをページに反映する。 */
-      function apply() {
-        document.querySelectorAll(".seg").forEach((seg) => {
-          seg.querySelectorAll("button").forEach((b) => {
-            b.setAttribute("aria-pressed", String(state[seg.dataset.key] === b.dataset.value));
-          });
-        });
-        renderScreens();
-        try {
-          localStorage.setItem("swatchbox-ds-4", JSON.stringify({ layout: state.layout }));
-        } catch {}
+      /** 高さの段階の一覧を描く。 */
+      function renderHeights() {
+        const rows = [
+          [48, "ボタン、入力欄、蓋・外側・内側のタブ"],
+          [40, "表示状態のタブ（外枠を含めて 48px）"],
+          [32, "…ボタン（タップできる範囲は 44px）"],
+        ];
+        document.getElementById("heights").innerHTML = rows
+          .map(
+            ([px, note]) => `<div class="space-row">
+              <span class="type-meta">${px}px<br />${note}</span>
+              <div class="size-box" style="width: 96px; height: ${px}px"></div>
+            </div>`,
+          )
+          .join("");
       }
-
-      document.querySelectorAll(".seg").forEach((seg) => {
-        seg.addEventListener("click", (e) => {
-          const b = e.target.closest("button");
-          if (!b) return;
-          state[seg.dataset.key] = b.dataset.value;
-          apply();
-        });
-      });
 
       document.getElementById("screens").addEventListener("click", (e) => {
         const tab = e.target.closest(".tab");
@@ -1285,12 +1224,11 @@
         }
       });
 
-      try {
-        Object.assign(state, JSON.parse(localStorage.getItem("swatchbox-ds-4") || "{}"));
-      } catch {}
       renderColors();
+      renderRadius();
       renderSpacing();
-      apply();
+      renderHeights();
+      renderScreens();
     </script>
   </body>
 </html>

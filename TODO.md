@@ -20,7 +20,7 @@
     - [x] 画面ごとに表示する情報と操作を決める
 - [ ] 実装に入る前の準備
     - [x] スタイリング手段を決める → [docs/styling.md](docs/styling.md)
-    - [ ] デザインシステムを決める（色、文字、角丸、余白）
+    - [x] デザインシステムを決める（色、文字、角丸、余白） → [docs/design-system.md](docs/design-system.md)
     - [ ] 画面ごとのデザインを決める
     - [ ] shadcn/ui を導入する（Base UI）
     - [ ] 使う部品を決める
