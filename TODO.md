@@ -25,15 +25,13 @@
         - 文字の xs（12px）を残すか決める
         - 影、フォーカス、タップしたときの見た目は、Maia の値を見てから決める
     - [ ] shadcn/ui を導入する（Base UI）
-        - [ ] Tailwind CSS v4 を入れる（@tailwindcss/vite）
-        - [ ] Maia で init する（`init --template vite --base base --preset maia`）
-            - `--preset maia` が使えるかは未確認。`init --help` で確かめる
-            - components.json のエイリアスは `#/` 始まりにする
-            - 拡張子なしの `#/lib/utils` が解決できるか確かめる
+        - [x] Tailwind CSS v4 を入れる（@tailwindcss/vite）
+        - [x] Maia で init する → [docs/styling.md](docs/styling.md) の「初期化の手順」
         - [ ] Maia の値と docs/design-system.md を比べ、揃えられるものは Maia に揃える
             - ボタン、入力欄、タブ、ダイアログ、`--radius` を `shadcn view` で見る
             - 高さ（48px）は数字を見て決める。色とフォントはこちらの値を残す
         - [ ] CSS 変数を docs/design-system.md の値に置き換え、chart-* と sidebar-* を消す
+            - init で入ったフォントの Figtree を、Zen Maru Gothic に置き換える
     - [ ] 使う部品を決める
     - [ ] boundaries に common を足し、参照の向きを縛る
         - routes と app は common を参照してよい

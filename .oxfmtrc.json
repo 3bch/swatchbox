@@ -12,6 +12,13 @@
     // 1 行の長さを超えてない範囲であれば元の改行位置を尊重する
     "lineWrappingStyle": "balance"
   },
+  "sortTailwindcss": {
+    // プロジェクトのテーマ（色や角丸のトークン）を並び順の判定に使う
+    "stylesheet": "./src/index.css",
+    "functions": ["cn"]
+  },
+  // shadcn/ui の生成物は、再インストールで差分が出ないようにフォーマットしない
+  "ignorePatterns": ["src/components/ui/**"],
   "overrides": [
     {
       "files": ["**/*.{yaml,yml}"],
