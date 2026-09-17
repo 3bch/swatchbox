@@ -18,12 +18,12 @@
     - 説明は 1 文 1 行で書き、文末には句点を打つこと。段落を分けたいときは空行で区切ること
     - 1 文は 60 文字を超えないようにすること
 - 型チェックやリント、フォーマットなどは package.json の scripts に定義されたものを使うこと
-- scripts の実行には `pnpm run` ではなく `node --run <script>` を使うこと
+- scripts の実行には `pnpm run <script>` を使うこと
 
 ## ブラウザでの表示確認
 
 - 表示確認には playwright-cli を利用すること（skill は `.claude/skills/playwright-cli/` に導入済み）
-- 確認前に `node --run dev` で dev サーバーを起動すること（http://localhost:5173）
+- 確認前に `pnpm run dev` で dev サーバーを起動すること（http://localhost:5173）
 - ブラウザ設定は `.playwright/cli.config.json` にあるため `--browser` の指定は不要
 - 確認が終わったら `playwright-cli close-all` でブラウザを終了すること
 

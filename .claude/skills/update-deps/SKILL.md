@@ -25,8 +25,8 @@ clean でなければユーザーに報告し、指示を仰ぐ。
 以降の各手順で「検証する」と書かれている箇所では、次の 3 つをこの順で実行する。
 
 ```bash
-mise exec -- node --run check   # lint / format / type / yaml
-mise exec -- node --run build   # 依存更新はバンドル時に初めて壊れることがある
+mise exec -- pnpm run check   # lint / format / type / yaml
+mise exec -- pnpm run build   # 依存更新はバンドル時に初めて壊れることがある
 mise exec -- pnpm peers check --lockfile-only
 ```
 
@@ -164,7 +164,7 @@ mise は更新時に旧バージョンのディレクトリを削除するが、
 同パッケージは oxlint と同一バージョンで公開されている。片方だけを上げないこと。
 
 JS plugin（`jsPlugins`）は alpha で semver の対象外のため、oxlint を上げた後は
-`node --run check:lint` が自前ルールを読み込めているかを確認する。
+`pnpm run check:lint` が自前ルールを読み込めているかを確認する。
 
 ### mise と npm でバージョンの見え方が食い違うことがある
 
