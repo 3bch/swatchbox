@@ -167,6 +167,10 @@
         background: transparent;
         color: var(--destructive);
       }
+      /* 押したときは Maia に揃えて 1px 下に動かす */
+      .btn:active:not(:disabled) {
+        transform: translateY(1px);
+      }
       .btn:disabled {
         opacity: 0.5;
         cursor: default;
@@ -182,7 +186,7 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 4px;
-        padding: 4px;
+        padding: 3px;
         border-radius: var(--radius-lg);
         background: var(--muted);
       }
@@ -191,7 +195,7 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        height: 40px;
+        height: 42px;
         border: 0;
         border-radius: var(--radius-md);
         background: transparent;
@@ -220,7 +224,7 @@
       .input.is-focus {
         border-color: var(--ring);
         outline: none;
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
       }
       .label {
         display: block;
@@ -405,7 +409,7 @@
         left: 16px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 24px;
         padding: 24px;
         border-radius: var(--radius-lg);
         background: var(--popover);
@@ -492,6 +496,109 @@
       .register-bar {
         padding: 16px 16px 24px;
         background: var(--background);
+      }
+
+      /* ---------- Maia に揃えた場合（項目ごとに #ds へクラスを付けて切り替える） ---------- */
+      /* 値は shadcn view で見た base-maia の Tailwind のクラスから計算した */
+      .ds.maia-radius .btn,
+      .ds.maia-radius .input,
+      .ds.maia-radius .tabs,
+      .ds.maia-radius .dialog {
+        /* rounded-4xl */
+        border-radius: calc(var(--radius) * 2.6);
+      }
+      .ds.maia-radius .tab {
+        /* rounded-xl */
+        border-radius: calc(var(--radius) * 1.4);
+      }
+      .ds.maia-height .btn,
+      .ds.maia-height .input {
+        height: 36px;
+      }
+      .ds.maia-height .btn-icon {
+        width: 36px;
+      }
+      /* 外枠を 36px にする（内側 3px を引いた高さ） */
+      .ds.maia-height .tab,
+      .ds.maia-height .place-tabs .tab {
+        height: 30px;
+      }
+      .ds.maia-button-text .btn {
+        gap: 6px;
+        padding: 0 12px;
+        font-size: 0.875rem;
+      }
+      .ds.maia-button-text .btn-icon {
+        padding: 0;
+      }
+      .ds.maia-button-text .btn .ic {
+        width: 16px;
+        height: 16px;
+      }
+      .ds.maia-title .dialog .title {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1;
+      }
+      .ds.maia-destructive .btn-destructive,
+      .ds.maia-destructive .btn-destructive-outline {
+        border-color: transparent;
+        background: color-mix(in oklch, var(--destructive) 10%, transparent);
+        color: var(--destructive);
+      }
+      .ds.maia-outline .btn-outline,
+      .ds.maia-outline .input {
+        background: color-mix(in oklch, var(--input) 30%, transparent);
+      }
+      .ds.maia-outline .btn-outline {
+        border-color: var(--border);
+      }
+      .ds.maia-tab .tab[aria-selected="true"] {
+        background: var(--background);
+        box-shadow: none;
+      }
+      .ds.maia-dialog .dialog {
+        box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 5%, transparent);
+      }
+      .ds.maia-scrim .scrim {
+        background: rgba(0, 0, 0, 0.8);
+        /* backdrop-blur-xs */
+        backdrop-filter: blur(4px);
+      }
+
+      /* 切り替えの操作盤（検討用ページの枠） */
+      .switcher {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        max-width: 840px;
+        margin: 16px auto 0;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        font-size: 13px;
+      }
+      .switcher-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .switcher-head b {
+        margin-right: auto;
+      }
+      .switcher-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+      }
+      .switcher label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
       }
 
       /* ---------- 部品・色・文字・余白の一覧 ---------- */
@@ -697,6 +804,15 @@
         色・文字・角丸・余白の決まった値を、画面の見本と部品で確かめるページです。
         画面ごとの細かなデザインは別に決めます。 CSS 変数の名前は shadcn/ui に揃えています。
       </p>
+
+      <div class="switcher">
+        <div class="switcher-head">
+          <b>Maia（shadcn/ui のスタイル）に揃えた場合</b>
+          <button type="button" id="maia-all">全部 Maia</button>
+          <button type="button" id="maia-none">全部元に戻す</button>
+        </div>
+        <div class="switcher-items" id="maia-items"></div>
+      </div>
 
       <main class="ds" id="ds">
         <h2 class="sec-title">画面の見本</h2>
@@ -1177,12 +1293,12 @@
       /** 余白の段階の一覧を描く。 */
       function renderSpacing() {
         const rows = [
-          [1, 4, "タブの外枠の内側、タブのボタンの間"],
+          [1, 4, "タブのボタンの間"],
           [2, 8, "アイコンと文字、並んだボタン、ラベルと入力欄、布の画像と名前"],
           [3, 12, "布の一覧の横の間、入力欄の内側"],
-          [4, 16, "画面の左右、布の一覧の縦の間、ダイアログの中の要素の間"],
+          [4, 16, "画面の左右、布の一覧の縦の間"],
           [5, 20, "ボタンの左右の内側"],
-          [6, 24, "ダイアログの内側"],
+          [6, 24, "ダイアログの内側、ダイアログの中の要素の間"],
           [8, 32, "箱の絵の下"],
         ];
         document.getElementById("spacing").innerHTML = rows
@@ -1199,7 +1315,7 @@
       function renderHeights() {
         const rows = [
           [48, "ボタン、入力欄、蓋・外側・内側のタブ"],
-          [40, "表示状態のタブ（外枠を含めて 48px）"],
+          [42, "表示状態のタブ（外枠の内側 3px を含めて 48px）"],
           [32, "…ボタン（タップできる範囲は 44px）"],
         ];
         document.getElementById("heights").innerHTML = rows
@@ -1224,6 +1340,47 @@
         }
       });
 
+      // ---------- Maia に揃えた場合の切り替え ----------
+      /** 切り替えられる項目。キーは #ds に付けるクラス名の後ろの部分。 */
+      const MAIA_ITEMS = [
+        ["radius", "角丸（ピル形）"],
+        ["height", "高さ 36px"],
+        ["button-text", "ボタンの文字 14px と余白"],
+        ["title", "ダイアログの見出し"],
+        ["destructive", "削除のボタン"],
+        ["outline", "outline ボタンと入力欄の背景"],
+        ["tab", "選択中のタブ"],
+        ["dialog", "ダイアログの影"],
+        ["scrim", "暗幕"],
+      ];
+
+      /** 項目のチェックボックスを描く。 */
+      function renderMaiaItems() {
+        document.getElementById("maia-items").innerHTML = MAIA_ITEMS.map(
+          ([key, label]) => `<label><input type="checkbox" data-maia="${key}" />${label}</label>`,
+        ).join("");
+      }
+
+      /** チェックの状態を #ds のクラスに反映する。 */
+      function applyMaia() {
+        document.querySelectorAll("[data-maia]").forEach((box) => {
+          ds.classList.toggle(`maia-${box.dataset.maia}`, box.checked);
+        });
+      }
+
+      /** すべての項目のチェックをまとめて付け外しする。 */
+      function setAllMaia(checked) {
+        document.querySelectorAll("[data-maia]").forEach((box) => {
+          box.checked = checked;
+        });
+        applyMaia();
+      }
+
+      document.getElementById("maia-items").addEventListener("change", applyMaia);
+      document.getElementById("maia-all").addEventListener("click", () => setAllMaia(true));
+      document.getElementById("maia-none").addEventListener("click", () => setAllMaia(false));
+
+      renderMaiaItems();
       renderColors();
       renderRadius();
       renderSpacing();

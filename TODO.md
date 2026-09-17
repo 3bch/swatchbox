@@ -23,7 +23,7 @@
     - [x] デザインシステムを決める（色、文字、角丸、余白） → [docs/design-system.md](docs/design-system.md)
     - [ ] 画面ごとのデザインを決める
         - 文字の xs（12px）を残すか決める
-        - 影、フォーカス、タップしたときの見た目は、Maia の値を見てから決める
+        - 影は、Maia の値を見てから決める（フォーカスとタップは Maia に揃えた）
     - [ ] shadcn/ui を導入する（Base UI）
         - [x] Tailwind CSS v4 を入れる（@tailwindcss/vite）
         - [x] Maia で init する → [docs/styling.md](docs/styling.md) の「初期化の手順」
