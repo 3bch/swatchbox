@@ -102,11 +102,14 @@
         --ring: oklch(0.51 0.197 353.9);
         --font: "Zen Maru Gothic", system-ui, sans-serif;
         --radius: 10px;
-        --radius-sm: calc(var(--radius) - 4px);
-        --radius-md: calc(var(--radius) - 2px);
+        /* 段階の倍率は Maia のものをそのまま使う */
+        --radius-sm: calc(var(--radius) * 0.6);
+        --radius-md: calc(var(--radius) * 0.8);
         --radius-lg: var(--radius);
-        --radius-xl: calc(var(--radius) + 4px);
-        --radius-2xl: calc(var(--radius) + 16px);
+        --radius-xl: calc(var(--radius) * 1.4);
+        --radius-2xl: calc(var(--radius) * 1.8);
+        --radius-3xl: calc(var(--radius) * 2.2);
+        --radius-4xl: calc(var(--radius) * 2.6);
         --radius-full: 999px;
       }
       .ds .phone,
@@ -414,7 +417,7 @@
         flex-direction: column;
         gap: 24px;
         padding: 24px;
-        border-radius: var(--radius-2xl);
+        border-radius: var(--radius-4xl);
         background: var(--popover);
         color: var(--popover-foreground);
         box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 5%, transparent);
@@ -1171,7 +1174,9 @@
           ["md", "8px", "var(--radius-md)", "布の画像"],
           ["lg", "10px", "var(--radius-lg)", "今は使わない"],
           ["xl", "14px", "var(--radius-xl)", "一覧の上の角"],
-          ["2xl", "26px", "var(--radius-2xl)", "ダイアログ"],
+          ["2xl", "18px", "var(--radius-2xl)", "今は使わない"],
+          ["3xl", "22px", "var(--radius-3xl)", "今は使わない"],
+          ["4xl", "26px", "var(--radius-4xl)", "ダイアログ"],
           [
             "full",
             "999px",
