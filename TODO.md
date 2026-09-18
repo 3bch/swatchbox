@@ -26,14 +26,12 @@
     - [ ] shadcn/ui を導入する（Base UI）
         - [x] Tailwind CSS v4 を入れる（@tailwindcss/vite）
         - [x] Maia で init する → [docs/styling.md](docs/styling.md) の「初期化の手順」
-        - [ ] Maia の値と docs/design-system.md を比べ、揃えられるものは Maia に揃える
+        - [x] Maia の値と docs/design-system.md を比べ、揃えられるものは Maia に揃える
             - [x] フォーカス、押したとき、ダイアログの要素の間、タブの外枠の内側を Maia に揃える
-            - [ ] 見本の切り替えで比べて、残りを決める（まだ見本を見ていない）
-                - 見本は `pnpm run dev` で起動し、/prototype/design-system.html を開く
-                - 形と大きさ：角丸（ピル形）、高さ（36px か 48px）、ボタンの文字と余白、ダイアログの見出し
-                - 色と影：削除のボタン、outline ボタンと入力欄の背景、選択中のタブ、ダイアログの影、暗幕
-                - 表示状態のタブを 42px にした（外枠 48px を保つため）。46px の外枠でよければ 40px に戻す
-            - [ ] 決まった値を docs/design-system.md に書き、見本の切り替えを消すか決める
+            - [x] 見本の切り替えで比べて、残りを決める
+                - 決めた値は [docs/design-system.md](docs/design-system.md) の「Maia に揃えたもの、揃えなかったもの」
+                - 高さは 48px、表示状態のタブは 42px のままにした
+            - [x] 決まった値を docs/design-system.md に書き、見本の切り替えを消す
         - [ ] CSS 変数を docs/design-system.md の値に置き換え、chart-* と sidebar-* を消す
             - init で入ったフォントの Figtree を、Zen Maru Gothic に置き換える
         - [ ] 最初に `shadcn add` したとき、src/components/ui/ がフォーマットの対象外になっているか確かめる
